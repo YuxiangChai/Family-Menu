@@ -1,0 +1,8 @@
+cloudfunctions/*/node_modules/
+miniprogram/config/env.local.js
+project.private.config.json
+.DS_Store
+npm-debug.log*
+.idea/
+.vscode/
+coverage/

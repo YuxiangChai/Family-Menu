@@ -1,0 +1,59 @@
+<view class="page home-page">
+  <view class="page-header">
+    <text class="page-header-kicker">WELCOME HOME</text>
+    <view class="page-header-title">小柴的菜单</view>
+    <view class="page-header-meta">{{today}} · 今晚吃什么？</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在翻开菜单</view><view class="state-text">看看今晚有什么好吃的</view></view>
+  <view wx:elif="{{unauthorized}}" class="join-card card">
+    <view class="join-badge">家</view>
+    <view class="join-kicker">FAMILY INVITATION</view>
+    <view class="join-title">加入小柴的家</view>
+    <view class="join-subtitle">输入家人发给你的邀请码，只需加入一次。</view>
+    <view class="join-form">
+      <label class="join-label" for="invite-code">家庭邀请码</label>
+      <input id="invite-code" class="join-input invite-input" value="{{inviteCode}}" bindinput="onInviteCodeInput" maxlength="40" placeholder="例如：ABCD-EFGH-JKLM" placeholder-class="placeholder" confirm-type="next" />
+      <label class="join-label" for="nickname">家里怎么称呼你</label>
+      <input id="nickname" class="join-input" value="{{nickname}}" bindinput="onNicknameInput" maxlength="20" placeholder="可选，例如：妈妈" placeholder-class="placeholder" confirm-type="done" bindconfirm="joinFamily" />
+      <button class="primary-button join-button" bindtap="joinFamily" loading="{{joining}}" disabled="{{joining}}" hover-class="button-pressed">{{joining ? '正在加入…' : '加入家庭'}}</button>
+    </view>
+    <view class="join-footnote">加入后会使用当前微信自动识别你的家庭身份</view>
+  </view>
+  <view wx:elif="{{error}}" class="state-panel card">
+    <view class="state-mark">!</view><view class="state-title">菜单暂时没打开</view><view class="state-text">{{error}}</view>
+    <button class="secondary-button" bindtap="loadMenu" hover-class="button-pressed">重新加载</button>
+  </view>
+
+  <block wx:else>
+    <view class="sticky-tools">
+      <view class="search-box"><text class="search-symbol">⌕</text><input value="{{keyword}}" bindinput="onSearch" placeholder="搜索菜名" placeholder-class="placeholder" confirm-type="search" aria-label="搜索菜品" /></view>
+      <scroll-view class="category-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="category-row">
+          <button wx:for="{{sections}}" wx:key="_id" class="category-pill {{activeCategory === item._id ? 'active' : ''}}" data-id="{{item._id}}" data-anchor="{{item.anchorId}}" bindtap="selectCategory">{{item.name}}</button>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view wx:if="{{visibleDishes.length}}" class="menu-sections">
+      <view wx:for="{{sections}}" wx:key="_id" wx:for-item="section" wx:for-index="sectionIndex" id="{{section.anchorId}}" class="category-section">
+        <view class="section-divider">
+          <view class="section-name"><text>0{{sectionIndex + 1}}</text><view>{{section.name}}</view></view>
+          <text class="section-count">{{section.dishes.length}} 道</text>
+        </view>
+        <view class="dish-grid">
+          <view wx:for="{{section.dishes}}" wx:key="_id" wx:for-item="dish" wx:for-index="dishIndex" class="dish-card card" bindtap="openDish" data-id="{{dish._id}}" hover-class="dish-card-pressed">
+            <image wx:if="{{dish.imageFileId}}" class="dish-image" src="{{dish.imageFileId}}" mode="aspectFill" lazy-load aria-label="{{dish.name}}菜品图片" />
+            <view wx:else class="dish-placeholder"><text class="plate-mark">{{dish.displayInitial}}</text></view>
+            <view class="dish-body">
+              <view class="dish-name">{{dish.name}}</view>
+              <view class="add-button" catchtap="addDish" data-id="{{dish._id}}" hover-class="button-pressed" role="button" tabindex="0" aria-label="今晚想吃{{dish.name}}">今晚想吃</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view wx:else class="state-panel card compact"><view class="state-mark">⌕</view><view class="state-title">没有找到这道菜</view><view class="state-text">换个关键词再找找。</view></view>
+  </block>
+</view>
+<view wx:if="{{!loading && !error && !unauthorized && cartCount > 0}}" class="cart-fab" bindtap="openCart" hover-class="button-pressed" role="button" tabindex="0" aria-label="打开今晚菜单，共{{cartCount}}道菜"><text>菜单</text><text class="cart-count">{{cartCount}}</text></view>

@@ -1,0 +1,44 @@
+<custom-nav title="{{navTitle}}" />
+<view class="page page-with-cta edit-page">
+  <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在打开菜谱</view></view>
+  <view wx:elif="{{error && !dish.name && categories.length === 0}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">表单没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadForm">重试</button></view>
+  <block wx:else>
+    <view class="form-section card">
+      <view class="serif-title section-title">基本信息</view>
+      <label class="field-label">菜品图片</label>
+      <button class="image-picker" bindtap="chooseImage" disabled="{{uploading}}">
+        <image wx:if="{{dish.imageFileId}}" src="{{dish.imageFileId}}" mode="aspectFill" />
+        <view wx:else class="image-empty"><text class="plus">＋</text><text>{{uploading ? '上传中…' : '拍照或从相册选择'}}</text></view>
+      </button>
+      <label class="field-label" for="name">菜品名称 *</label><input id="name" class="field-input" value="{{dish.name}}" data-field="name" bindinput="updateField" maxlength="40" placeholder="例如：番茄炒蛋" />
+      <label class="field-label">分类 *</label><picker mode="selector" range="{{categoryNames}}" value="{{categoryIndex}}" bindchange="changeCategory"><view class="field-picker">{{categoryNames[categoryIndex] || '请选择分类'}} <text>⌄</text></view></picker>
+      <label class="field-label" for="servings">菜谱基准人份 *</label><input id="servings" class="field-input" type="number" value="{{dish.defaultServings}}" data-field="defaultServings" bindinput="updateField" />
+      <view class="switch-row"><view><view class="switch-title">上架菜品</view><view class="muted switch-desc">关闭后家庭成员看不到这道菜</view></view><switch checked="{{dish.enabled}}" bindchange="changeEnabled" color="#B94732" /></view>
+    </view>
+
+    <view class="form-section card">
+      <view class="section-heading"><view><view class="serif-title section-title">原料与配料</view><view class="muted helper">数字用量会按份数自动合并</view></view><view class="mini-add" bindtap="addIngredient" hover-class="control-pressed" role="button"><text class="mini-add-icon">＋</text><text>添加原料</text></view></view>
+      <view wx:for="{{dish.ingredients}}" wx:key="index" class="ingredient-editor">
+        <view class="editor-top">
+          <view class="ingredient-title"><text class="ingredient-number">0{{index + 1}}</text><text>原料</text></view>
+          <view class="ingredient-actions">
+            <view class="type-toggle"><view class="type-option {{item.type === 'main' ? 'selected main' : ''}}" data-index="{{index}}" data-type="main" bindtap="setIngredientType" role="button">主料</view><view class="type-option {{item.type !== 'main' ? 'selected seasoning' : ''}}" data-index="{{index}}" data-type="seasoning" bindtap="setIngredientType" role="button">配料</view></view>
+            <view class="remove-ingredient {{dish.ingredients.length <= 1 ? 'disabled' : ''}}" data-index="{{index}}" bindtap="removeIngredient" role="button" aria-label="移除第{{index + 1}}项原料">×</view>
+          </view>
+        </view>
+        <view class="ingredient-fields">
+          <input class="field-input ingredient-name" value="{{item.name}}" data-index="{{index}}" data-field="name" bindinput="updateIngredient" placeholder="原料名称 *" />
+          <view class="quantity-row"><input class="field-input" value="{{item.quantity}}" data-index="{{index}}" data-field="quantity" bindinput="updateIngredient" placeholder="用量 *" /><input class="field-input" value="{{item.unit}}" data-index="{{index}}" data-field="unit" bindinput="updateIngredient" placeholder="单位" /></view>
+          <input class="field-input ingredient-note" value="{{item.note}}" data-index="{{index}}" data-field="note" bindinput="updateIngredient" placeholder="备注（可选）" />
+        </view>
+      </view>
+    </view>
+
+    <view class="form-section card">
+      <view class="section-heading"><view class="serif-title section-title">制作步骤</view><view class="mini-add" bindtap="addStep" hover-class="control-pressed" role="button"><text class="mini-add-icon">＋</text><text>添加步骤</text></view></view>
+      <view wx:for="{{dish.steps}}" wx:key="index" class="step-editor"><view class="step-index">{{index + 1}}</view><textarea value="{{item}}" data-index="{{index}}" bindinput="updateStep" maxlength="300" placeholder="写下这一步怎么做" /><view class="step-remove {{dish.steps.length <= 1 ? 'disabled' : ''}}" data-index="{{index}}" bindtap="removeStep" role="button">×</view></view>
+    </view>
+    <view wx:if="{{error}}" class="form-error">{{error}}</view>
+  </block>
+</view>
+<view wx:if="{{!loading}}" class="bottom-cta"><button class="primary-button" bindtap="saveDish" disabled="{{saving || uploading}}" loading="{{saving}}">{{saving ? '正在保存…' : '保存菜品'}}</button></view>

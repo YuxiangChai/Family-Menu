@@ -1,0 +1,20 @@
+.order-hero { margin-top: 4rpx; padding: 28rpx; display: flex; align-items: flex-start; justify-content: space-between; gap: 18rpx; border-top: 5rpx solid var(--gold); }
+.hero-title { margin: 4rpx 0 6rpx; font-size: 38rpx; }
+.section { margin-top: 18rpx; padding: 26rpx; }
+.section-title { font-size: 32rpx; }
+.section-heading { display: flex; justify-content: space-between; align-items: center; }
+.total { font-size: 21rpx; }
+.dish-row { position: relative; min-height: 82rpx; padding: 17rpx 4rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; }
+.dish-row + .dish-row::before { content: ""; position: absolute; top: 0; left: 4rpx; right: 4rpx; height: 1rpx; background: linear-gradient(90deg, transparent 0%, #ddd3c6 9%, #ddd3c6 91%, transparent 100%); }
+.dish-name { font-weight: 700; line-height: 1.45; }
+.servings { flex: none; color: var(--brand); font-size: 23rpx; font-weight: 700; }
+.remark { margin-top: 18rpx; padding: 18rpx; border-left: 4rpx solid var(--gold); background: var(--paper-deep); font-size: 24rpx; }
+.remark-label { display: block; margin-bottom: 4rpx; color: var(--brand-dark); font-size: 20rpx; font-weight: 800; }
+.ingredient-row { min-height: 82rpx; padding: 14rpx 0; display: flex; align-items: center; justify-content: space-between; gap: 16rpx; border-bottom: 1rpx solid var(--line); font-size: 24rpx; }
+.ingredient-main { min-width: 0; }
+.ingredient-name { font-weight: 700; }
+.note { font-size: 20rpx; }
+.sources { margin-top: 2rpx; color: var(--muted); font-size: 20rpx; overflow-wrap: anywhere; }
+.amount { flex: none; color: var(--leaf); font-weight: 800; }
+.action-bar { display: flex; gap: 12rpx; }
+.action-bar button { min-width: 0; flex: 1; font-size: 24rpx; }

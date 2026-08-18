@@ -1,0 +1,27 @@
+.detail-page { padding-top: 16rpx; }
+.hero-image, .hero-placeholder { width: 100%; height: 400rpx; border-radius: 20rpx; display: block; }
+.hero-placeholder { position: relative; overflow: hidden; background: linear-gradient(145deg, #d8a78b, #f0d7c1); display: flex; align-items: center; justify-content: center; }
+.hero-placeholder::before { content: ""; position: absolute; width: 300rpx; height: 300rpx; border: 42rpx solid rgba(255,252,247,.3); border-radius: 50%; }
+.hero-initial { position: relative; z-index: 2; width: 118rpx; height: 118rpx; border-radius: 50%; background: rgba(255,252,247,.92); color: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 56rpx; font-weight: 800; }
+.title-card { position: relative; z-index: 2; margin: -36rpx 16rpx 22rpx; padding: 30rpx; border-top: 5rpx solid var(--brand); }
+.dish-title { margin: 5rpx 0 10rpx; font-size: 46rpx; }
+.meta-row { display: flex; align-items: center; gap: 22rpx; margin-top: 22rpx; }
+.meta-value { color: var(--leaf); font-size: 31rpx; font-weight: 800; }
+.meta-label { color: var(--muted); font-size: 22rpx; }
+.section { margin-top: 18rpx; padding: 28rpx; }
+.section-title { font-size: 34rpx; }
+.subheading { margin: 20rpx 0 6rpx; color: var(--brand); font-size: 20rpx; font-weight: 800; letter-spacing: 3rpx; }
+.seasoning-heading { padding-top: 12rpx; border-top: 1rpx dashed var(--line); }
+.ingredient-row { min-height: 68rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; border-bottom: 1rpx solid #eee6db; font-size: 25rpx; }
+.ingredient-row:last-child { border: 0; }
+.ingredient-name { font-weight: 650; }
+.ingredient-note { color: var(--muted); font-size: 21rpx; }
+.ingredient-amount { flex: none; color: var(--leaf); font-weight: 750; }
+.step-row { display: flex; gap: 18rpx; padding: 20rpx 0; border-bottom: 1rpx solid #eee6db; }
+.step-row:last-child { border: 0; }
+.step-number { flex: none; width: 42rpx; height: 42rpx; border-radius: 10rpx; display: flex; align-items: center; justify-content: center; background: var(--brand); color: #fff; font-size: 21rpx; font-weight: 800; }
+.step-text { flex: 1; font-size: 25rpx; }
+.detail-actions { display: flex; gap: 12rpx; }
+.detail-actions button { min-width: 0; }
+.cart-link { flex: .8; }
+.add-detail { flex: 1.2; }

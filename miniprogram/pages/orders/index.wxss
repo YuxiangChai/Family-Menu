@@ -1,0 +1,9 @@
+.orders-page { padding-top: 32rpx; }
+.order-list { display: grid; gap: 14rpx; }
+.order-card { padding: 24rpx; border-left: 5rpx solid var(--gold); transition: opacity .16s ease, transform .16s ease; }
+.order-pressed { opacity: .74; transform: scale(.988); }
+.order-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16rpx; }
+.creator { font-size: 30rpx; font-weight: 800; }
+.time { margin-top: 3rpx; color: var(--muted); font-size: 21rpx; }
+.order-items { margin: 18rpx 0; color: #4d4c46; font-size: 24rpx; line-height: 1.65; }
+.order-bottom { padding-top: 15rpx; border-top: 1rpx solid var(--line); display: flex; justify-content: space-between; color: var(--muted); font-size: 21rpx; }

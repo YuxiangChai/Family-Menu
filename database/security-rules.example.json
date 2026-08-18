@@ -1,0 +1,10 @@
+{
+  "description": "参考配置：在 CloudBase 控制台中分别为五个集合设置相同规则；此文件不是自动部署脚本。",
+  "collections": {
+    "family_members": { "read": false, "write": false },
+    "categories": { "read": false, "write": false },
+    "dishes": { "read": false, "write": false },
+    "orders": { "read": false, "write": false },
+    "family_settings": { "read": false, "write": false }
+  }
+}

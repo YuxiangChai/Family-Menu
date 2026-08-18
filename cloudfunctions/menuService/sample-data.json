@@ -1,0 +1,59 @@
+{
+  "categories": [
+    { "_id": "cat-home", "name": "家常小炒", "sortOrder": 10, "enabled": true },
+    { "_id": "cat-meat", "name": "肉香满屋", "sortOrder": 20, "enabled": true },
+    { "_id": "cat-soup", "name": "汤汤水水", "sortOrder": 30, "enabled": true }
+  ],
+  "dishes": [
+    {
+      "_id": "dish-tomato-egg",
+      "name": "番茄炒蛋",
+      "categoryId": "cat-home",
+      "description": "酸甜开胃，十分钟就能端上桌。",
+      "imageFileId": "",
+      "defaultServings": 2,
+      "cookingTime": 12,
+      "ingredients": [
+        { "name": "番茄", "quantity": 2, "unit": "个", "type": "main", "note": "熟一些更出汁" },
+        { "name": "鸡蛋", "quantity": 3, "unit": "个", "type": "main", "note": "" },
+        { "name": "盐", "quantity": 2, "unit": "克", "type": "seasoning", "note": "" },
+        { "name": "白糖", "quantity": 1, "unit": "勺", "type": "seasoning", "note": "可按口味减少" }
+      ],
+      "steps": ["番茄切块，鸡蛋加少许盐打散。", "热锅炒熟鸡蛋后盛出。", "番茄炒出汁，倒回鸡蛋翻匀调味。"],
+      "enabled": true
+    },
+    {
+      "_id": "dish-braised-pork",
+      "name": "家常红烧肉",
+      "categoryId": "cat-meat",
+      "description": "慢火收汁，软糯咸香，最适合配米饭。",
+      "imageFileId": "",
+      "defaultServings": 3,
+      "cookingTime": 70,
+      "ingredients": [
+        { "name": "五花肉", "quantity": 600, "unit": "克", "type": "main", "note": "切 3 厘米方块" },
+        { "name": "冰糖", "quantity": 25, "unit": "克", "type": "seasoning", "note": "" },
+        { "name": "生抽", "quantity": 2, "unit": "勺", "type": "seasoning", "note": "" },
+        { "name": "姜", "quantity": 4, "unit": "片", "type": "seasoning", "note": "" }
+      ],
+      "steps": ["五花肉冷水下锅焯水。", "小火炒化冰糖，放肉块炒至上色。", "加热水和调料，小火炖 50 分钟后收汁。"],
+      "enabled": true
+    },
+    {
+      "_id": "dish-seaweed-soup",
+      "name": "紫菜蛋花汤",
+      "categoryId": "cat-soup",
+      "description": "清爽鲜香，给晚餐添一碗暖汤。",
+      "imageFileId": "",
+      "defaultServings": 2,
+      "cookingTime": 10,
+      "ingredients": [
+        { "name": "紫菜", "quantity": 8, "unit": "克", "type": "main", "note": "" },
+        { "name": "鸡蛋", "quantity": 1, "unit": "个", "type": "main", "note": "" },
+        { "name": "香油", "quantity": "少许", "unit": "", "type": "seasoning", "note": "出锅前放" }
+      ],
+      "steps": ["水开后放入紫菜。", "淋入蛋液，轻轻推动形成蛋花。", "加盐调味，出锅前滴香油。"],
+      "enabled": true
+    }
+  ]
+}

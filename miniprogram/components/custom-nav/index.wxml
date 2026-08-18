@@ -1,0 +1,8 @@
+<view class="nav-shell" style="height: {{totalHeight}}px;">
+  <view class="nav-fixed" style="height: {{totalHeight}}px; padding-top: {{statusBarHeight}}px;">
+    <view class="nav-row" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack" hover-class="nav-back-pressed" role="button" aria-label="返回上一页"><view class="back-icon"></view></view>
+      <view class="nav-title">{{title}}</view>
+    </view>
+  </view>
+</view>

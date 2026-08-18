@@ -1,0 +1,7 @@
+.nav-shell { width: 100%; }
+.nav-fixed { position: fixed; top: 0; left: 0; right: 0; z-index: 100; box-sizing: border-box; background: rgba(247, 241, 232, .98); border-bottom: 1rpx solid rgba(81, 67, 52, .08); }
+.nav-row { position: relative; display: flex; align-items: center; justify-content: center; }
+.nav-back { position: absolute; left: 32rpx; top: 50%; width: 72rpx; height: 64rpx; transform: translateY(-50%); display: flex; align-items: center; justify-content: flex-start; }
+.back-icon { width: 20rpx; height: 20rpx; border-left: 4rpx solid #171916; border-bottom: 4rpx solid #171916; transform: rotate(45deg); }
+.nav-back-pressed { opacity: .45; }
+.nav-title { max-width: 360rpx; overflow: hidden; color: #171916; font-size: 27rpx; font-weight: 600; line-height: 1.2; text-align: center; text-overflow: ellipsis; white-space: nowrap; }

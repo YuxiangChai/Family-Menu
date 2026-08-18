@@ -1,0 +1,117 @@
+page {
+  --paper: #fffcf7;
+  --canvas: #f2ede4;
+  --paper-deep: #f8f1e7;
+  --ink: #20221e;
+  --muted: #77756d;
+  --line: #e3dbcf;
+  --brand: #d9563f;
+  --brand-dark: #9f392b;
+  --brand-soft: #f7ded5;
+  --leaf: #426b52;
+  --warning: #a55d20;
+  --danger: #ad3e35;
+  background: linear-gradient(180deg, #f7f1e8 0, var(--canvas) 360rpx);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  font-size: 28rpx;
+  line-height: 1.55;
+}
+
+view, text, image, button, input, textarea, picker, switch {
+  box-sizing: border-box;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  line-height: inherit;
+  background: transparent;
+}
+
+button::after { border: 0; }
+
+.page { min-height: 100vh; padding: 28rpx 24rpx 64rpx; }
+.page-with-cta { padding-bottom: calc(164rpx + env(safe-area-inset-bottom)); }
+.serif-title { font-family: inherit; font-weight: 700; letter-spacing: -1rpx; }
+.muted { color: var(--muted); }
+.eyebrow { color: var(--brand); font-size: 21rpx; font-weight: 700; letter-spacing: 5rpx; }
+
+.page-header { margin: 0 6rpx 28rpx 18rpx; }
+.page-header-kicker { display: block; color: var(--brand); font-size: 21rpx; font-weight: 700; line-height: 1.65; letter-spacing: 4rpx; }
+.page-header-title { margin-top: 6rpx; font-size: 44rpx; font-weight: 700; line-height: 1.4; letter-spacing: -2rpx; }
+.page-header-meta { margin-top: 7rpx; color: var(--muted); font-size: 22rpx; line-height: 1.65; letter-spacing: .5rpx; }
+
+.card {
+  background: var(--paper);
+  border: 1rpx solid rgba(81, 67, 52, .1);
+  border-radius: 20rpx;
+  box-shadow: 0 9rpx 26rpx rgba(71, 54, 37, .06);
+}
+
+.primary-button, .secondary-button, .danger-button {
+  min-height: 88rpx;
+  padding: 20rpx 30rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.primary-button { background: var(--ink); color: #fffdf8; box-shadow: 0 10rpx 22rpx rgba(32, 34, 30, .18); }
+.primary-button[disabled] { opacity: .45; box-shadow: none; }
+.secondary-button { color: var(--brand-dark); background: var(--brand-soft); }
+.danger-button { color: var(--danger); background: #f8e2dd; }
+.button-pressed { opacity: .72; transform: scale(.985); }
+
+.icon-button {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3e8db;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 38rpx;
+}
+
+.field-label { display: block; margin: 28rpx 0 12rpx; color: var(--ink); font-weight: 700; font-size: 27rpx; }
+.field-input, .field-textarea, .field-picker {
+  width: 100%;
+  min-height: 92rpx;
+  padding: 24rpx;
+  border: 1rpx solid var(--line);
+  border-radius: 14rpx;
+  background: var(--paper);
+  font-family: inherit;
+  font-size: 30rpx;
+}
+.field-textarea { min-height: 180rpx; }
+.placeholder { color: #9a8f84; }
+
+.state-panel { margin: 56rpx 0; padding: 52rpx 36rpx; text-align: center; }
+.state-mark { width: 80rpx; height: 80rpx; margin: 0 auto 22rpx; border-radius: 18rpx; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; font-size: 34rpx; font-family: inherit; font-weight: 800; }
+.state-title { font-size: 34rpx; font-weight: 700; margin-bottom: 10rpx; }
+.state-text { color: var(--muted); margin-bottom: 28rpx; }
+
+.bottom-cta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 253, 248, .97);
+  border-top: 1rpx solid var(--line);
+}
+
+.status-chip { display: inline-flex; align-items: center; padding: 7rpx 16rpx; border-radius: 8rpx; font-family: inherit; font-size: 21rpx; font-weight: 700; }
+.status-pending { background: #f7e8c9; color: #865317; }
+.status-confirmed { background: #dcebd8; color: #3f6339; }
+.status-cooking { background: #f3dccd; color: #8f4427; }
+.status-completed { background: #d9e9e5; color: #31645a; }
+.status-cancelled { background: #e9e3df; color: #716761; }

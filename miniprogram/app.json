@@ -1,0 +1,49 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/orders/index",
+    "pages/profile/index",
+    "pages/dish-detail/index",
+    "pages/cart/index",
+    "pages/order-detail/index",
+    "pages/admin-dishes/index",
+    "pages/invite-settings/index",
+    "pages/dish-edit/index"
+  ],
+  "window": {
+    "backgroundColor": "#F2EDE4",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#F7F1E8",
+    "navigationBarTitleText": "小柴的菜单",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#77756D",
+    "selectedColor": "#D9563F",
+    "backgroundColor": "#FFFCF7",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "菜单",
+        "iconPath": "images/icons/home.png",
+        "selectedIconPath": "images/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/orders/index",
+        "text": "今晚订单",
+        "iconPath": "images/icons/goods.png",
+        "selectedIconPath": "images/icons/goods-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "images/icons/usercenter.png",
+        "selectedIconPath": "images/icons/usercenter-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

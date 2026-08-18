@@ -1,0 +1,25 @@
+<custom-nav title="今晚菜单" />
+<view class="page cart-page">
+  <view class="page-heading"><text class="eyebrow">今晚想吃</text><view class="serif-title title">确认菜单</view><view class="muted">调整份数，再告诉做饭的人你的偏好。</view></view>
+  <view wx:if="{{!items.length}}" class="state-panel card"><view class="state-mark">＋</view><view class="state-title">今晚菜单还是空的</view><view class="state-text">回菜单挑几道家里爱吃的菜吧。</view><button class="secondary-button" bindtap="addMore">去选菜</button></view>
+  <block wx:else>
+    <view class="cart-list">
+      <view wx:for="{{items}}" wx:key="dishId" class="cart-item card">
+        <image wx:if="{{item.imageFileId}}" src="{{item.imageFileId}}" mode="aspectFill" class="thumb" />
+        <view wx:else class="thumb placeholder-thumb">{{item.name[0]}}</view>
+        <view class="item-name serif-title">{{item.name}}</view>
+        <view class="serving-control"><view class="serving-button" data-index="{{index}}" data-delta="-1" bindtap="changeServings" role="button" aria-label="减少份数">−</view><text class="serving-value">{{item.servings}}</text><view class="serving-button" data-index="{{index}}" data-delta="1" bindtap="changeServings" role="button" aria-label="增加份数">＋</view></view>
+        <view class="remove" data-index="{{index}}" bindtap="removeItem" role="button" aria-label="移除{{item.name}}">×</view>
+      </view>
+    </view>
+    <view class="add-more" bindtap="addMore" hover-class="button-pressed" role="button" tabindex="0"><text class="add-more-icon">＋</text><text class="add-more-label">再加一道菜</text><text class="add-more-arrow">›</text></view>
+    <view class="form-card card">
+      <label class="field-label diner-label" for="dinerCount">就餐人数</label>
+      <input id="dinerCount" class="field-input" type="number" value="{{dinerCount}}" bindinput="onDinerCount" placeholder="1–20 人" />
+      <label class="field-label" for="remark">口味备注</label>
+      <textarea id="remark" class="field-textarea" value="{{remark}}" bindinput="onRemark" maxlength="300" placeholder="例如：少辣、不要香菜" placeholder-class="placeholder" />
+      <view wx:if="{{error}}" class="form-error">{{error}}</view>
+    </view>
+    <view class="primary-button submit-order {{submitting ? 'is-disabled' : ''}}" bindtap="submitOrder" hover-class="button-pressed" role="button" tabindex="0">{{submitting ? '正在提交…' : '提交今晚点菜'}}</view>
+  </block>
+</view>
