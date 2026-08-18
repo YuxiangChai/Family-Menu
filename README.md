@@ -4,6 +4,19 @@
 
 项目使用 WXML、WXSS、JavaScript 和微信云开发 CloudBase，不需要独立服务器，不含支付与公众注册。
 
+## 快速使用
+
+本项目是需要自行部署的微信小程序源码，不是打开即用的托管服务。部署前需要准备一个可用的微信小程序 AppID 和 CloudBase 环境。
+
+1. 克隆本仓库，在微信开发者工具中导入仓库根目录。
+2. 确认 `project.config.json` 中的 AppID，并在 `miniprogram/config/env.js` 配置 CloudBase 环境 ID。
+3. 按 [数据库配置](database/README.md) 创建五个集合、必要索引和安全规则。
+4. 在开发者工具中上传并部署 `cloudfunctions/menuService`，选择云端安装依赖。
+5. 在 `family_members` 手动建立第一位管理员，然后由管理员生成家庭邀请码。
+6. 先使用“预览”在真机验证，再上传体验版、提交审核并发布。
+
+请勿将 AppSecret、私钥、访问令牌或生产账号密码提交到仓库。完整配置步骤见下文。
+
 ## 已实现功能
 
 - 菜品分类、搜索、详情、原料、配料和制作步骤
@@ -175,3 +188,7 @@ npm test
 ### 图片上传失败
 
 确认当前用户是启用状态的管理员，图片为 JPG、PNG 或 WebP 且小于 3MB，并重新部署最新 `menuService`。
+
+## 开源许可
+
+本项目使用 [MIT License](LICENSE)。你可以使用、修改和分发代码，但需保留原版权声明和许可声明。
