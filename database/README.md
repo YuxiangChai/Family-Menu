@@ -1,82 +1,43 @@
-# 数据库集合与权限
+# 自建 SQLite 数据库
 
-在 CloudBase 控制台手动创建以下集合。小程序前端不直接读写数据库，全部业务读写由 `menuService` 云函数完成。
+启动服务时自动创建表和索引，无需数据库账号，也无需另外安装 MySQL。默认文件为 `server/data/menu.sqlite`；可用服务端 `MENU_DATA_DIR` 修改目录。
 
-## 集合
+## 各表用途
 
-### `family_members`
+| 表 | 内容 |
+| --- | --- |
+| `family_members` | 家庭成员：唯一 OpenID、昵称、管理员/成员角色、启用状态 |
+| `family_settings` | 家庭公共配置：邀请码的盐及 scrypt 校验值；另有照片签名密钥 |
+| `categories` | 菜品分类；自动创建三个默认分类，不会创建示例菜 |
+| `dishes` | 菜品信息；仅菜名必填 |
+| `orders` | 订单和菜品/食材快照，提交者 + 提交标识联合唯一 |
+| `sessions` | 微信登录会话的 token 哈希、OpenID、到期时间（7 天） |
+| `rate_limits` | 登录、接口和邀请码尝试频率计数 |
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `_id` | String | 自动生成 |
-| `openid` | String | 微信 OpenID，必填 |
-| `nickname` | String | 家庭内显示名 |
-| `role` | String | `admin` 或 `member` |
-| `enabled` | Boolean | 是否允许使用 |
-| `createdAt` | Date | 创建时间 |
+业务表的 `data` 列保存完整 JSON；用于查找、唯一性和约束的字段同时保存在独立列。服务内事务保证订单写入原子性。时间按 ISO 时间戳保存，订单日期按北京时间计算。
 
-为 `openid` 创建唯一索引。
+## 成员与设置的区别
 
-### `categories`
+`family_members` 一人一条，例如“小柴是 admin、家人是 member”。用 `npm run members` 查看名单，用服务器命令授权管理员、停用/恢复成员。
 
-字段：`_id`、`name`、`sortOrder`、`enabled`。示例数据使用固定 `_id`，重复初始化会安全覆盖示例分类。
+`family_settings` 一套家庭级配置。固定 `family` 记录保存邀请码校验值，不保存邀请码明文；`_media-key` 记录保存图片签名密钥。**加入家庭会增加一条成员记录，不会增加一份家庭设置**。换邀请码不移除已经加入的成员。
 
-### `dishes`
+## 菜品可选字段
 
-字段：`_id`、`name`、`categoryId`、`description`、`imageFileId`、`defaultServings`、`cookingTime`、`ingredients`、`steps`、`enabled`、`createdAt`、`updatedAt`。
+唯一必须填写的是非空 `name`。其他用户填写字段允许空值：
 
-`ingredients` 每项包含 `name`、`quantity`、`unit`、`type`、`note`。`type` 为 `main` 或 `seasoning`。
+- `categoryId`、`description`、`imageFileId`：空字符串。
+- `defaultServings`、`cookingTime`：未填写为 `null`，不是强制填 0。
+- `ingredients`、`steps`：允许空数组；空白食材行和空白步骤会忽略。
+- 有名称的食材可以不填用量、单位和备注，不会擅自填成 0。
+- 若填了数字，则仍校验范围。未填基准份数时，仅在订单食材缩放计算时按 1 份处理。
 
-### `orders`
+菜品没有分类时在菜单显示“未分类”；上架状态和创建/更新时间由系统维护。没有食材的菜也可以下单，食材汇总为空。
 
-字段：`_id`、`orderDate`、`creatorOpenid`、`creatorName`、`dinerCount`、`items`、`remark`、`status`、`ingredientSummary`、`idempotencyKey`、`createdAt`、`updatedAt`。
+## 权限、照片与备份
 
-- `items` 保存菜名、图片、默认份数、实际份数、原料和步骤快照，菜品以后编辑也不会改变历史订单。
-- `ingredientSummary` 是提交时计算的合并食材清单。
-- 为 `creatorOpenid + idempotencyKey` 创建联合唯一索引，进一步防止网络重试造成重复订单。
-- 建议为 `orderDate + createdAt`、`creatorOpenid + createdAt` 创建联合索引，以支持管理员今日订单和成员历史订单查询。
+前端只调用 HTTP API，不直接打开 SQLite。服务向微信换取真实身份，再查 `family_members` 检查权限。成员只查自己的订单；菜品维护、图片上传、邀请码和订单状态修改要求管理员。
 
-### `family_settings`
+照片文件位于数据目录下的 `uploads/`，数据库保存稳定的内部引用；返回前端时生成限时签名链接，并再次检查会话及成员状态。服务器不提供数据库、`.env` 或任意文件目录下载接口。
 
-使用固定文档 ID `family` 保存家庭级设置。当前字段包括：
-
-- `inviteCodeSalt`：邀请码随机盐值
-- `inviteCodeHash`：邀请码经过 `scrypt` 计算后的校验值
-- `inviteCodeUpdatedAt`：最近更新时间
-- `inviteCodeUpdatedBy`：修改邀请码的管理员 OpenID
-
-数据库不会保存邀请码明文。管理员生成邀请码后应立即复制；遗忘后只能生成新的。
-
-## 安全规则
-
-在五个集合的“权限设置 / 安全规则”中都使用：
-
-```json
-{
-  "read": false,
-  "write": false
-}
-```
-
-云函数以服务端身份访问数据库，不受前端安全规则限制。不要把集合设为“所有用户可读”或“仅创建者可写”，因为项目的角色校验、订单快照和字段清洗都在云函数中完成。
-
-云存储也建议设为前端不可写。菜品图片由管理员在编辑页选择后转为数据，经 `menuService.uploadDishImage` 校验管理员身份并上传。
-
-## 第一位管理员
-
-1. 部署云函数后打开小程序“我的”页，复制页面显示的 OpenID。
-2. 在 `family_members` 新增文档：
-
-```json
-{
-  "openid": "刚复制的 OpenID",
-  "nickname": "小柴",
-  "role": "admin",
-  "enabled": true,
-  "createdAt": "请选择控制台的日期类型并填当前时间"
-}
-```
-
-3. 重新编译或下拉刷新。该用户会显示“管理员 · 做饭人”。
-4. 管理员进入“我的 → 家庭邀请码”生成邀请码并发给家人。
-5. 家人在首页输入邀请码后，云函数会读取其真实 OpenID，并以普通成员身份写入 `family_members`。邀请码永远不能授予管理员权限。
+数据库包含真实 OpenID 和家庭数据，应保持在服务器受控目录中，不提交到 GitHub。使用根目录的 `npm run backup` 同时备份数据库和照片。部署、成员管理、恢复方法见 [主 README](../README.md)。旧集合说明见 [历史记录](cloudbase-legacy.md)。

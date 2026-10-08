@@ -3,12 +3,8 @@ const api = require('../../utils/api')
 function emptyDish() {
   return {
     name: '', categoryId: '', description: '', imageFileId: '',
-    defaultServings: 2, cookingTime: 20, enabled: true,
-    ingredients: [
-      { name: '', quantity: '', unit: '', type: 'main', note: '' },
-      { name: '', quantity: '', unit: '', type: 'seasoning', note: '' }
-    ],
-    steps: ['']
+    defaultServings: '', cookingTime: '', enabled: true,
+    ingredients: [], steps: []
   }
 }
 
@@ -25,11 +21,12 @@ Page({
       const menu = await api.call('listMenu', { includeDisabled: true })
       let dish = emptyDish()
       if (this.dishId) dish = await api.call('getDish', { dishId: this.dishId })
-      else if (menu.categories[0]) dish.categoryId = menu.categories[0]._id
-      const categoryIndex = Math.max(0, menu.categories.findIndex((item) => item._id === dish.categoryId))
+      const categories = [{ _id: '', name: '不分类' }, ...menu.categories.filter((item) => item._id !== '__uncategorized__')]
+      const categoryIndex = Math.max(0, categories.findIndex((item) => item._id === dish.categoryId))
+      dish = { ...dish, defaultServings: dish.defaultServings == null ? '' : dish.defaultServings, cookingTime: dish.cookingTime == null ? '' : dish.cookingTime }
       this.setData({
-        loading: false, dish, categories: menu.categories,
-        categoryNames: menu.categories.map((item) => item.name), categoryIndex
+        loading: false, dish, categories,
+        categoryNames: categories.map((item) => item.name), categoryIndex
       })
     } catch (error) { this.setData({ loading: false, error: error.message }) }
   },
@@ -56,14 +53,12 @@ Page({
     this.setData({ 'dish.ingredients': ingredients })
   },
   removeIngredient(event) {
-    if (this.data.dish.ingredients.length <= 1) return
     const index = Number(event.currentTarget.dataset.index)
     this.setData({ 'dish.ingredients': this.data.dish.ingredients.filter((_, itemIndex) => itemIndex !== index) })
   },
   updateStep(event) { this.setData({ [`dish.steps[${Number(event.currentTarget.dataset.index)}]`]: event.detail.value }) },
   addStep() { this.setData({ 'dish.steps': [...this.data.dish.steps, ''] }) },
   removeStep(event) {
-    if (this.data.dish.steps.length <= 1) return
     const index = Number(event.currentTarget.dataset.index)
     this.setData({ 'dish.steps': this.data.dish.steps.filter((_, itemIndex) => itemIndex !== index) })
   },
@@ -92,9 +87,7 @@ Page({
   async saveDish() {
     if (this.data.saving) return
     const dish = this.data.dish
-    if (!dish.name.trim() || !dish.categoryId) { this.setData({ error: '请填写菜名并选择分类' }); return }
-    if (!dish.ingredients.some((item) => item.name.trim())) { this.setData({ error: '至少填写一种原料' }); return }
-    if (!dish.steps.some((step) => step.trim())) { this.setData({ error: '至少填写一个制作步骤' }); return }
+    if (!dish.name.trim()) { this.setData({ error: '请填写菜品名称' }); return }
     this.setData({ saving: true, error: '' })
     try {
       await api.call('saveDish', { dish: { ...dish, _id: this.dishId || undefined } })

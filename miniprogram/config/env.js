@@ -1,4 +1,2 @@
-// CloudBase 环境 ID。可留空使用开发者工具当前环境，也可填入 cloud1-xxxx。
-module.exports = {
-  cloudEnvId: 'cloud1-3g4kxml2443b5b26'
-}
+// 本机调试默认地址。正式使用时改为你的 HTTPS 域名，不带末尾斜杠。
+module.exports = { apiBaseUrl: 'http://127.0.0.1:3000' }

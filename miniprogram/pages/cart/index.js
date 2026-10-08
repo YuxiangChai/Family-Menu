@@ -30,16 +30,26 @@ Page({
       return
     }
     this.setData({ submitting: true, error: '' })
+    const payload = {
+      dinerCount,
+      remark: this.data.remark,
+      items: this.data.items.map((item) => ({ dishId: item.dishId, servings: item.servings }))
+    }
+    const fingerprint = JSON.stringify(payload)
+    if (!this.pendingKey || this.pendingFingerprint !== fingerprint) {
+      this.pendingKey = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+      this.pendingFingerprint = fingerprint
+    }
     try {
       const result = await api.call('createOrder', {
         payload: {
-          dinerCount,
-          remark: this.data.remark,
-          items: this.data.items.map((item) => ({ dishId: item.dishId, servings: item.servings })),
-          idempotencyKey: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+          ...payload,
+          idempotencyKey: this.pendingKey
         }
       })
       cartStore.saveCart([])
+      this.pendingKey = null
+      this.pendingFingerprint = null
       wx.showToast({ title: result.duplicated ? '订单已提交' : '点菜成功', icon: 'success' })
       setTimeout(() => wx.switchTab({ url: '/pages/orders/index' }), 700)
     } catch (error) {

@@ -1,0 +1,9 @@
+.git
+node_modules
+**/.env
+**/.env.*
+!**/.env.example
+server/data
+server/backups
+project.private.config.json
+*.sqlite*

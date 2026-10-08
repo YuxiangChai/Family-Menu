@@ -1,0 +1,19 @@
+[Unit]
+Description=Family Menu
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+# 安装时将用户名、项目目录和 Node 路径替换成这台电脑的实际值。
+User=family-menu
+WorkingDirectory=/opt/Family-Menu
+ExecStart=/usr/bin/node --env-file=/opt/Family-Menu/server/.env /opt/Family-Menu/server/index.js
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

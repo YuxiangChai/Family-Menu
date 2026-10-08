@@ -6,3 +6,13 @@ npm-debug.log*
 .idea/
 .vscode/
 coverage/
+node_modules/
+server/.env
+server/data/
+server/backups/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.env
+.env.*
+!.env.example

@@ -8,18 +8,19 @@
     <view class="title-card card">
       <text class="eyebrow">家常好味</text>
       <view class="dish-title serif-title">{{dish.name}}</view>
-      <view class="meta-row"><view><text class="meta-value">{{dish.defaultServings}}</text><text class="meta-label"> 人份基准菜谱</text></view></view>
+      <view wx:if="{{dish.description}}" class="muted">{{dish.description}}</view>
+      <view wx:if="{{dish.defaultServings || dish.cookingTime}}" class="meta-row"><view wx:if="{{dish.defaultServings}}"><text class="meta-value">{{dish.defaultServings}}</text><text class="meta-label"> 人份基准菜谱</text></view><view wx:if="{{dish.cookingTime}}"><text class="meta-value">{{dish.cookingTime}}</text><text class="meta-label"> 分钟</text></view></view>
     </view>
 
-    <view class="section card">
+    <view wx:if="{{mainIngredients.length || seasonings.length}}" class="section card">
       <view class="section-title serif-title">要准备的食材</view>
-      <view class="subheading">主料</view>
+      <view wx:if="{{mainIngredients.length}}" class="subheading">主料</view>
       <view wx:for="{{mainIngredients}}" wx:key="index" class="ingredient-row"><view><text class="ingredient-name">{{item.name}}</text><text wx:if="{{item.note}}" class="ingredient-note"> · {{item.note}}</text></view><text class="ingredient-amount">{{item.quantity}}{{item.unit}}</text></view>
       <view wx:if="{{seasonings.length}}" class="subheading seasoning-heading">配料</view>
       <view wx:for="{{seasonings}}" wx:key="index" class="ingredient-row"><view><text class="ingredient-name">{{item.name}}</text><text wx:if="{{item.note}}" class="ingredient-note"> · {{item.note}}</text></view><text class="ingredient-amount">{{item.quantity}}{{item.unit}}</text></view>
     </view>
 
-    <view class="section card">
+    <view wx:if="{{dish.steps.length}}" class="section card">
       <view class="section-title serif-title">怎么做</view>
       <view wx:for="{{dish.steps}}" wx:key="index" class="step-row"><view class="step-number">{{index + 1}}</view><view class="step-text">{{item}}</view></view>
     </view>

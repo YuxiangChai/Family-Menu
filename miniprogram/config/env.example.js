@@ -1,3 +1,3 @@
 module.exports = {
-  cloudEnvId: 'cloud1-your-environment-id'
+  apiBaseUrl: 'https://menu.example.com'
 }

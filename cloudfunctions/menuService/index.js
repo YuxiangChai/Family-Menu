@@ -1,4 +1,5 @@
 const cloud = require('wx-server-sdk')
+const { cleanDish } = require('./lib/validation')
 const {
   aggregateIngredients,
   canTransitionStatus,
@@ -51,48 +52,6 @@ function requireAdmin(member) {
 
 function cleanText(value, max = 200) {
   return String(value || '').trim().slice(0, max)
-}
-
-function cleanIngredient(item) {
-  const name = cleanText(item && item.name, 30)
-  if (!name) fail('BAD_REQUEST', '原料名称不能为空')
-  const rawQuantity = item.quantity
-  const numberQuantity = typeof rawQuantity === 'number' || /^\d+(\.\d+)?$/.test(String(rawQuantity || '').trim())
-    ? Number(rawQuantity)
-    : cleanText(rawQuantity, 20)
-  if (numberQuantity === '' || (typeof numberQuantity === 'number' && numberQuantity < 0)) {
-    fail('BAD_REQUEST', `请填写 ${name} 的正确用量`)
-  }
-  return {
-    name,
-    quantity: numberQuantity,
-    unit: cleanText(item.unit, 10),
-    type: item.type === 'main' ? 'main' : 'seasoning',
-    note: cleanText(item.note, 80)
-  }
-}
-
-function cleanDish(payload) {
-  const name = cleanText(payload.name, 40)
-  const categoryId = cleanText(payload.categoryId, 80)
-  if (!name || !categoryId) fail('BAD_REQUEST', '菜品名称和分类必填')
-  const steps = (payload.steps || []).map((step) => cleanText(step, 300)).filter(Boolean)
-  const ingredients = (payload.ingredients || [])
-    .filter((item) => cleanText(item && item.name, 30))
-    .map(cleanIngredient)
-  if (!ingredients.length) fail('BAD_REQUEST', '至少填写一种原料')
-  if (!steps.length) fail('BAD_REQUEST', '至少填写一个制作步骤')
-  return {
-    name,
-    categoryId,
-    description: cleanText(payload.description, 300),
-    imageFileId: cleanText(payload.imageFileId, 500),
-    defaultServings: normalizeServings(payload.defaultServings),
-    cookingTime: Math.max(0, Math.min(1440, Number(payload.cookingTime) || 0)),
-    ingredients,
-    steps,
-    enabled: payload.enabled !== false
-  }
 }
 
 async function getProfile(openid) {

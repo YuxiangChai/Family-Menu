@@ -1,194 +1,153 @@
 # 小柴的菜单
 
-仅供家庭成员使用的微信原生小程序。家人可以浏览菜品、组成今晚菜单并提交点菜；管理员可以维护菜品、处理订单，并查看按份数自动汇总的食材清单。
+家庭成员专用微信小程序：浏览菜品、组成今晚菜单、提交订单；管理员维护菜品和处理订单。
 
-项目使用 WXML、WXSS、JavaScript 和微信云开发 CloudBase，不需要独立服务器，不含支付与公众注册。
+当前版本使用 **微信原生小程序 + Node.js HTTP 服务 + SQLite 本地数据库**，无需腾讯 CloudBase。服务可以放在家里的电脑上，后续通过 Cloudflare Tunnel 暴露 HTTPS 域名。本仓库没有替你创建 Tunnel，也不包含生产数据库、图片或微信密钥。
 
-## 快速使用
+## 保留的功能
 
-本项目是需要自行部署的微信小程序源码，不是打开即用的托管服务。部署前需要准备一个可用的微信小程序 AppID 和 CloudBase 环境。
+- 分类、搜索、菜品详情、主料/配料、步骤、图片、上架/下架。
+- 菜名是唯一必填项：分类、图片、介绍、份数、时长、食材、配料、步骤均可留空；未分类菜不会被隐藏。
+- 今晚菜单、份数调整、人数和口味备注；防重复下单、订单快照、按份数合并食材。
+- 家庭邀请码加入；管理员生成/自定义/更换邀请码；普通成员只能查看自己的订单，管理员查看当天所有订单并更新状态。
+- 微信身份由服务器向微信验证，不信任前端传来的 OpenID 或角色；停用账号不能用邀请码重新加入。
+- 不会初始化三道示例菜，只自动创建三个默认分类。
 
-1. 克隆本仓库，在微信开发者工具中导入仓库根目录。
-2. 确认 `project.config.json` 中的 AppID，并在 `miniprogram/config/env.js` 配置 CloudBase 环境 ID。
-3. 按 [数据库配置](database/README.md) 创建五个集合、必要索引和安全规则。
-4. 在开发者工具中上传并部署 `cloudfunctions/menuService`，选择云端安装依赖。
-5. 在 `family_members` 手动建立第一位管理员，然后由管理员生成家庭邀请码。
-6. 先使用“预览”在真机验证，再上传体验版、提交审核并发布。
+“下单后微信推送”此前尚未实现，这次没有增加推送。仍需另行配置微信订阅消息模板及用户授权。
 
-请勿将 AppSecret、私钥、访问令牌或生产账号密码提交到仓库。完整配置步骤见下文。
+## 先在本机跑起来
 
-## 已实现功能
-
-- 菜品分类、搜索、详情、原料、配料和制作步骤
-- “今晚菜单”本地暂存、份数调整、人数与口味备注
-- 防连续点击和幂等提交，订单保存完整菜品与原料快照
-- 成员查看自己的订单；管理员查看当天全部订单
-- `待确认 → 已确认 → 制作中 → 已完成` 状态流转，可在完成前取消
-- 相同名称、相同单位的数字原料按份数缩放后合并，并显示来源菜品
-- 管理员新增、编辑、上架/下架菜品，通过云函数鉴权后上传图片
-- 未授权、加载中、空数据、失败重试状态
-- 家庭邀请码加入：邀请码仅由云函数校验，新成员仍使用真实微信 OpenID 识别
-- 管理员可随机生成或自定义邀请码；数据库只保存加盐校验值，不保存邀请码明文
-- 所有数据库写入和图片上传均通过云函数；前端传入的 OpenID 与角色不会被信任
-
-## 目录
-
-```text
-miniprogram/                  小程序前端
-  config/env.js               CloudBase 环境配置
-  pages/                      菜单、订单、我的和管理员页面
-  utils/                      云函数调用、购物车和格式化
-cloudfunctions/
-  menuService/                业务云函数、纯业务规则及测试
-  quickstartFunctions/        原项目自带示例云函数，保留但不再使用
-database/
-  README.md                   集合、索引、权限和首位管理员说明
-  security-rules.example.json 权限建议参考
-```
-
-## 1. 导入项目与 AppID
-
-1. 安装并打开微信开发者工具，选择“导入项目”。
-2. 项目目录选择本仓库根目录，不是 `miniprogram/` 子目录。
-3. `project.config.json` 已保留原项目 AppID：`wx1adc9ce0c7af2732`。
-4. 如果要使用另一个已有小程序，在开发者工具的项目设置中切换，或只修改 `project.config.json` 的 `appid`。AppID 不是 AppSecret，可以出现在项目配置中。
-5. 基础库建议使用当前稳定版；项目最低需要支持 `wx.cloud` 和 `wx.chooseMedia`。
-
-不要把微信 AppSecret 写入小程序代码、项目配置、云函数或 README。这个项目不需要 AppSecret。
-
-## 2. 创建或关联 CloudBase 环境
-
-1. 在开发者工具顶部点击“云开发”。首次使用时创建环境；已有环境可以直接选择并关联。
-2. 复制环境 ID，例如 `cloud1-xxxx`。
-3. 打开 `miniprogram/config/env.js`，填写：
-
-```js
-module.exports = {
-  cloudEnvId: 'cloud1-xxxx'
-}
-```
-
-开发者工具已经绑定正确环境时也可以保留空字符串，让工具使用当前环境。`env.example.js` 提供了占位示例。环境 ID 不是密钥，但不要在任何文件中加入 AppSecret、私钥、访问令牌或真实生产凭据。
-
-## 3. 创建数据库集合和索引
-
-在云开发控制台“数据库”中创建：
-
-- `family_members`
-- `categories`
-- `dishes`
-- `orders`
-- `family_settings`
-
-然后按照 [database/README.md](database/README.md) 配置字段约定、唯一索引和安全规则。五个集合都应拒绝小程序前端直接读写。
-
-推荐索引：
-
-- `family_members.openid`：唯一
-- `orders.creatorOpenid + orders.idempotencyKey`：联合唯一
-- `orders.orderDate + orders.createdAt`：联合普通索引
-- `orders.creatorOpenid + orders.createdAt`：联合普通索引
-
-## 4. 部署云函数
-
-在微信开发者工具文件树中找到 `cloudfunctions/menuService`：
-
-1. 右键 `menuService`。
-2. 选择“上传并部署：云端安装依赖”。
-3. 等待部署成功，并确认云函数环境与 `env.js` 指向同一环境。
-4. 如果修改过云函数代码，需要重新上传部署。
-
-云函数依赖只有 `wx-server-sdk`。业务规则测试不依赖云环境，可在本机运行：
+安装 Node.js 24 LTS 或更新版本。服务使用 Node 自带 SQLite，没有需要 `npm install` 的运行依赖。
 
 ```bash
-cd cloudfunctions/menuService
+git clone https://github.com/YuxiangChai/Family-Menu.git
+cd Family-Menu
+cp server/.env.example server/.env
+```
+
+编辑 `server/.env`：
+
+```dotenv
+WX_APP_ID=你的小程序AppID
+WX_APP_SECRET=你的小程序AppSecret
+PUBLIC_BASE_URL=http://127.0.0.1:3000
+HOST=127.0.0.1
+PORT=3000
+```
+
+AppSecret 在微信公众平台的小程序开发设置中获取，**只放服务器的 `.env`，不要放到小程序或提交到 GitHub**。服务端 AppID 应和 `project.config.json` 中的小程序 AppID 相同。Git 已忽略 `.env` 和运行数据。
+
+```bash
+npm start
+```
+
+打开 `http://127.0.0.1:3000/health`，应返回 `ok: true`。这只能证明本地服务正常，不代表微信登录和公网访问已成功。未配置微信凭据时也能检查健康状态，但不能登录。
+
+微信开发者工具导入仓库根目录。`miniprogram/config/env.js` 默认指向本机：
+
+```js
+module.exports = { apiBaseUrl: 'http://127.0.0.1:3000' }
+```
+
+仅开发者工具本机调试时启用“不校验合法域名、web-view（业务域名）、TLS 版本以及 HTTPS 证书”。**手机中的 `127.0.0.1` 是手机自己，不是这台电脑**；手机预览要等 HTTPS 域名可以访问后再测试。
+
+## 第一位管理员和邀请码
+
+没有任何公开“抢占管理员”接口。首次安装需要在服务器终端授权：
+
+1. 启动服务，在小程序“我的”页复制自己的真实 OpenID（未加入家庭也能查看自己的 OpenID）。
+2. 在仓库根目录执行：
+
+```bash
+npm run admin -- --openid "自己的真实OpenID" --nickname "小柴"
+```
+
+3. 回到“我的”刷新，进入“家庭邀请码”，生成邀请码并私下发给家人。
+4. 家人在首页输入邀请码和称呼，获得普通成员权限。换邀请码不影响已加入的成员，旧邀请码不能再让新成员加入。
+
+查看家庭成员：
+
+```bash
+npm run members
+# 只有确实需要完整标识时才使用：
+npm run members -- --show-openids
+# 停用/恢复某位成员（角色不变）：
+npm run member -- --openid "该成员OpenID" --enabled false
+npm run member -- --openid "该成员OpenID" --enabled true
+```
+
+`family_members` 是“谁属于家庭、叫什么、有什么权限”；`family_settings` 是整个家庭共用的配置（邀请码校验值等），不是另一份成员名单。详见 [数据库说明](database/README.md)。不要把成员列表或备份提交到 GitHub。
+
+## 以后接 Tunnel
+
+假设域名为 `https://menu.example.com`：
+
+1. Tunnel 指向运行服务的 `http://127.0.0.1:3000`，无需将路由器端口开放到公网。
+2. `server/.env` 中 `PUBLIC_BASE_URL` 改为 `https://menu.example.com` 并重启服务。
+3. `miniprogram/config/env.js` 中 `apiBaseUrl` 同样改为 `https://menu.example.com`，重新编译/上传小程序。
+4. 微信公众平台按当前要求配置 HTTPS 合法域名，至少包括 `request`、图片所需的 `downloadFile`。上传使用 JSON 请求，不使用 `wx.uploadFile`。
+5. 真机验证登录、邀请码、只填菜名保存、照片、下单和状态更新。
+
+不要让 API 域名前置交互式 Cloudflare Access 登录页或浏览器验证码，否则小程序拿到的会是 HTML 而不是接口响应。服务本身校验微信身份和成员权限。备案不等于网络已通，仍要实测 HTTPS、Tunnel 和微信平台配置。
+
+家里的电脑必须开机、联网、服务常驻；断电/断网期间不能下单。项目提供 [Linux systemd 示例](server/deploy/family-menu.service)，安装前需替换用户、目录和 Node 路径；不会自动安装系统服务。
+
+## 家用电脑使用 Docker（可选）
+
+安装 Docker 和 Compose，复制并配置 `server/.env` 后：
+
+```bash
+docker compose up -d --build
+docker compose logs --tail=50 menu
+docker compose exec menu node server/cli.js admin --openid "自己的真实OpenID" --nickname "小柴"
+docker compose exec menu node server/cli.js members
+```
+
+Compose 只将端口绑定到宿主机 `127.0.0.1:3000`，适合宿主机运行 Tunnel；如果 Tunnel 也在容器里，需要另外配置容器网络。数据库和图片保存于命名卷 `menu-data`，重建容器不会清空。不要执行 `docker compose down -v`，那会删除数据卷。
+
+更新代码：
+
+```bash
+git pull --ff-only
+docker compose up -d --build
+```
+
+原生 Node 部署则 `git pull --ff-only` 后重启服务。两种方式的数据目录不同，换部署方式前先备份并迁移数据。
+
+## 数据和备份
+
+原生部署数据在 `server/data/`：`menu.sqlite` 保存成员、菜品、订单、邀请码和会话；`uploads/` 保存照片。它们是可写的运行数据，不是静态源码；GitHub 拉代码不会带走家庭数据。
+
+```bash
+npm run backup
+# 或指定一个尚不存在的目录：
+npm run backup -- --output /安全备份位置/新备份目录
+```
+
+命令使用 SQLite 在线备份，再复制图片，默认放在被 Git 忽略的 `server/backups/`。备份含敏感家庭数据，要保存到另一块硬盘/受控位置。仅复制正在运行的 `menu.sqlite` 可能漏掉 WAL 中的内容，应使用备份命令。
+
+Docker 中备份到数据卷内一个新目录，再取出来：
+
+```bash
+docker compose exec menu node server/cli.js backup --output /app/server/data/backups/first-backup
+mkdir -p server/backups
+docker compose cp menu:/app/server/data/backups/first-backup ./server/backups/first-backup
+```
+
+每次更换备份名称。恢复时先停止服务并保留当前数据副本，再用备份中的 `menu.sqlite` 和 `uploads/` 替换完整的数据目录，之后重启。不要在旧数据库仍运行时替换文件。
+
+原 CloudBase 里的真实数据不会自动出现在 SQLite 中。若有旧菜品/订单需要保留，应先导出并另行转换导入；停服前未导出的内容不能仅靠源码恢复。`sample-data.json` 只是旧示例，不是实际家庭数据。
+
+## 开发与验证
+
+```bash
 npm test
 ```
 
-测试覆盖食材缩放合并、不可计算用量、订单快照、份数校验和状态流转。
+测试覆盖真实本地 HTTP + SQLite 的业务、权限、图片签名、邀请码、幂等下单、备份，以及前端登录刷新和可选菜品字段。测试使用临时数据库和模拟微信换码结果，不会创建真实账号数据；没有 HTTP 模拟登录后门。
 
-## 5. 设置第一位管理员
+代码目录：`miniprogram/` 为现有小程序；`server/` 为新服务；`cloudfunctions/menuService/lib/` 为共用校验和业务规则。旧 CloudBase 云函数及 [旧部署记录](docs/cloudbase-legacy.md) 仅作历史参考，当前前端不再调用。微信登录/Tunnel 真机联调必须使用实际部署环境完成。
 
-本项目没有“抢占首个管理员”的公开接口，避免任何先打开小程序的人获得管理员权限。
+## 许可
 
-1. 完成集合创建和云函数部署后，编译并打开小程序。
-2. 进入“我的”，复制页面显示的真实 OpenID。
-3. 在 CloudBase 的 `family_members` 集合新增一条文档：
-
-```json
-{
-  "openid": "此处粘贴页面显示的 OpenID",
-  "nickname": "小柴",
-  "role": "admin",
-  "enabled": true
-}
-```
-
-4. `createdAt` 请在控制台中使用“日期”类型填写当前时间。
-5. 重新编译小程序。进入“我的”后应显示“管理员 · 做饭人”。
-
-第一位管理员仍需用上述方式手动建立，避免任何先打开小程序的人抢占管理员身份。之后普通成员使用家庭邀请码加入；禁用成员时把 `enabled` 改为 `false`，被停用的 OpenID 不能通过邀请码自行恢复。
-
-## 6. 设置家庭邀请码
-
-1. 在 CloudBase 数据库新建 `family_settings` 集合，权限设为前端不可读写。
-2. 重新部署最新版 `menuService` 云函数。
-3. 管理员打开“我的 → 家庭邀请码”。
-4. 点击“生成邀请码”，复制页面显示的字符串并私下发给家人；也可以设置 8–32 位自定义字母数字串。
-5. 家人在首页输入邀请码和称呼后即可加入，以后打开时无需重复输入。
-
-管理员更换邀请码后，旧邀请码立即失效，已经加入的成员不受影响。明文邀请码只在生成成功的页面显示一次，云端数据库只保存加盐后的校验值。
-
-## 7. 手机预览与体验版
-
-1. 在开发者工具中确认当前账号有该 AppID 的开发权限。
-2. 点击“预览”，用管理员微信扫码。
-3. 在真机检查菜单加载、图片上传、点菜提交、订单状态和底部安全区域。
-4. 让其他家庭成员扫码，在首页输入家庭邀请码加入。
-5. 点击“上传”，填写版本号与备注。
-6. 登录微信公众平台，在“管理 → 版本管理”中把开发版本设为体验版，并添加家庭成员为体验者。
-
-## 8. 提交审核与发布
-
-1. 在微信公众平台补齐小程序名称、头像、服务类目和隐私保护指引。
-2. 因管理员可以从相册或相机选择菜品图片，请在隐私说明中如实描述用途；不要声明未使用的权限。
-3. 从体验版完整走一遍未加入、邀请码加入、普通成员和管理员四种身份。
-4. 提交审核前为审核准备一个临时邀请码，并保证审核期间不要更换。
-5. 在审核表单测试说明中写清：首页输入临时家庭邀请码即可进入主要功能。邀请码不是微信账号密码，审核完成后应立即在“我的 → 家庭邀请码”中更换。
-6. 在“版本管理”提交审核，按平台要求填写功能说明与测试路径。
-7. 审核通过后点击发布。
-
-该小程序虽然只给家庭使用，仍需遵守微信平台当前的类目、隐私和审核要求；提交时以公众平台展示的最新规则为准。
-
-## 安全核对
-
-- 数据库与云存储前端权限默认拒绝，所有业务操作走 `menuService`。
-- 云函数使用 `cloud.getWXContext().OPENID`，忽略前端伪造身份。
-- `family_members.enabled` 是所有家庭数据访问的前置条件。
-- 邀请码只在云函数中校验，数据库不保存明文，加入者只能获得 `member` 角色。
-- 菜品维护、图片上传和订单状态变更均再次检查 `role === admin`。
-- 订单条目保存快照，不引用会变化的菜品文档。
-- 下架代替物理删除，前端没有删除菜品接口。
-- 项目中不得提交 AppSecret、私钥、云 API 密钥、访问令牌或生产账号密码。
-
-## 常见问题
-
-### 提示“你还不在家庭成员名单中”
-
-请在首页输入管理员发来的邀请码。如果曾被管理员停用，需要管理员在 `family_members` 中重新启用，邀请码不能绕过停用状态。
-
-### 云函数调用失败
-
-确认 `menuService` 已部署、环境 ID 一致、五个集合已经创建，并查看云开发控制台的云函数日志。
-
-### 订单查询提示缺少索引
-
-按本 README 第 3 节创建联合索引。CloudBase 控制台通常也会在错误提示中给出快捷创建入口。
-
-### 图片上传失败
-
-确认当前用户是启用状态的管理员，图片为 JPG、PNG 或 WebP 且小于 3MB，并重新部署最新 `menuService`。
-
-## 开源许可
-
-本项目使用 [MIT License](LICENSE)。你可以使用、修改和分发代码，但需保留原版权声明和许可声明。
+[MIT License](LICENSE)。
