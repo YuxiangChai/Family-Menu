@@ -1,13 +1,14 @@
 const { fail, cleanText, cleanDish } = require('../cloudfunctions/menuService/lib/validation')
-const { aggregateIngredients, createItemSnapshot, canTransitionStatus, normalizeServings } = require('../cloudfunctions/menuService/lib/domain')
+const { dishSet, ingredientReferences } = require('./order-domain')
+const { SharedMenu, SHARED_ACTIONS } = require('./shared-menu')
 const { createInviteRecord, formatInviteCode, generateInviteCode, verifyInviteCode } = require('../cloudfunctions/menuService/lib/invite')
 
 const UNCATEGORIZED = { _id: '__uncategorized__', name: '未分类', sortOrder: 10000, enabled: true }
-const ACTIONS = new Set(['getProfile', 'joinFamily', 'getInviteStatus', 'setInviteCode', 'listMenu', 'getDish', 'createOrder', 'listOrders', 'getOrder', 'updateOrderStatus', 'saveDish', 'toggleDish', 'uploadDishImage'])
+const ACTIONS = new Set(['getProfile', 'joinFamily', 'getInviteStatus', 'setInviteCode', 'listMenu', 'getDish', 'listOrders', 'getOrder', 'prepareOrderEdit', 'saveDish', 'toggleDish', 'uploadDishImage', 'prepareReorder', 'listFamilyMembers', 'updateFamilyMember'])
 function chinaDate() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) }
 
 class Service {
-  constructor(store, media) { this.store = store; this.media = media }
+  constructor(store, media) { this.store = store; this.media = media; this.shared = new SharedMenu(this) }
   member(openid) {
     const member = this.store.member(openid)
     if (!member) fail('UNAUTHORIZED', '你还不在家庭成员名单中')
@@ -19,20 +20,50 @@ class Service {
     if (member.role !== 'admin') fail('FORBIDDEN', '只有管理员可以执行此操作')
     return member
   }
+  canEditOrder(member) { return Boolean(member.enabled) }
   publicMember(member) {
     if (!member) return null
-    return { _id: member._id, nickname: member.nickname, role: member.role, enabled: member.enabled }
+    return { _id: member._id, nickname: member.nickname, role: member.role, isAdmin: member.role === 'admin', enabled: member.enabled }
   }
   picture(dish, tokenHash) {
     return { ...dish, imageFileId: this.media.url(dish.imageFileId, tokenHash) }
   }
   dispatch(action, identity, event = {}) {
+    if (SHARED_ACTIONS.has(action)) return this.shared[action](identity.openid, event, identity.tokenHash)
     if (!ACTIONS.has(action)) fail('BAD_REQUEST', '未知操作')
     return this[action](identity.openid, event, identity.tokenHash)
   }
   getProfile(openid) {
     const member = this.store.member(openid)
     return { openid, authorized: Boolean(member?.enabled), member: member?.enabled ? this.publicMember(member) : null }
+  }
+  listFamilyMembers(openid) {
+    this.admin(openid)
+    return { members: this.store.members().map((member) => this.publicMember(member)) }
+  }
+  updateFamilyMember(openid, event) {
+    this.admin(openid)
+    return this.store.transaction(() => {
+      const member = this.store.memberById(cleanText(event.memberId, 80))
+      if (!member) fail('NOT_FOUND', '家庭成员不存在')
+      const changes = {}
+      if (Object.hasOwn(event, 'nickname')) {
+        if (typeof event.nickname !== 'string' || !event.nickname.trim() || Array.from(event.nickname.trim()).length > 20) fail('BAD_REQUEST', '称呼请填写 1 到 20 个字')
+        changes.nickname = cleanText(event.nickname, 20)
+      }
+      if (Object.hasOwn(event, 'role') || Object.hasOwn(event, 'isAdmin')) fail('FORBIDDEN', '管理员权限固定，不能新增或转让')
+      if (Object.hasOwn(event, 'isChef')) {
+        fail('BAD_REQUEST', '已取消厨师权限，只保留普通用户和管理员')
+      }
+      if (Object.hasOwn(event, 'enabled')) {
+        if (member.role === 'admin') fail('FORBIDDEN', '不能停用或变更管理员账号状态')
+        if (typeof event.enabled !== 'boolean') fail('BAD_REQUEST', '账号状态必须是启用或停用')
+        changes.enabled = event.enabled
+      }
+      if (!Object.keys(changes).length) fail('BAD_REQUEST', '请指定要修改的成员属性')
+      const saved = this.store.saveMember({ ...member, ...changes, updatedAt: new Date().toISOString() })
+      return { member: this.publicMember(saved) }
+    })
   }
   joinFamily(openid, event) {
     const existing = this.store.member(openid)
@@ -44,7 +75,7 @@ class Service {
     const settings = this.store.get('family_settings', 'family')
     if (!settings?.inviteCodeHash) fail('INVITE_NOT_CONFIGURED', '家庭管理员还没有设置邀请码')
     if (!verifyInviteCode(event.inviteCode, { salt: settings.inviteCodeSalt, hash: settings.inviteCodeHash })) fail('INVALID_INVITE_CODE', '邀请码不正确，请向家庭管理员确认')
-    const member = this.store.saveMember({ openid, nickname: cleanText(event.nickname, 20) || '家人', role: 'member', enabled: true, joinedByInvite: true, createdAt: new Date().toISOString() })
+    const member = this.store.saveMember({ openid, nickname: cleanText(event.nickname, 20) || '家人', role: 'member', isChef: false, enabled: true, joinedByInvite: true, createdAt: new Date().toISOString() })
     return { joined: true, member: this.publicMember(member) }
   }
   getInviteStatus(openid) {
@@ -101,60 +132,44 @@ class Service {
     this.admin(openid)
     return { fileID: this.media.url(this.media.upload(event), tokenHash) }
   }
-  createOrder(openid, event) {
-    const member = this.member(openid)
-    const payload = event.payload || {}
-    const key = cleanText(payload.idempotencyKey, 80)
-    if (!key) fail('BAD_REQUEST', '缺少提交标识')
-    return this.store.transaction(() => {
-      const previous = this.store.findOrder(openid, key)
-      if (previous) return { orderId: previous._id, duplicated: true }
-      const selections = payload.items
-      if (!Array.isArray(selections) || selections.length < 1 || selections.length > 20) fail('BAD_REQUEST', '请选择 1 到 20 道菜')
-      const seen = new Set()
-      const items = selections.map((selection) => {
-        const id = cleanText(selection?.dishId, 80)
-        if (!id || seen.has(id)) fail('BAD_REQUEST', '菜品标识无效或重复')
-        seen.add(id)
-        const dish = this.store.get('dishes', id)
-        if (!dish?.enabled) fail('BAD_REQUEST', '部分菜品已下架，请刷新菜单')
-        try { return createItemSnapshot(dish, selection.servings) }
-        catch { fail('BAD_REQUEST', '份数必须是 1 到 20 的整数') }
-      })
-      let diners
-      try { diners = normalizeServings(payload.dinerCount) }
-      catch { fail('BAD_REQUEST', '就餐人数请填写 1 到 20 的整数') }
-      const now = new Date().toISOString()
-      const order = this.store.save('orders', { orderDate: chinaDate(), creatorOpenid: openid, creatorName: member.nickname, dinerCount: diners, items, remark: cleanText(payload.remark, 300), status: 'pending', ingredientSummary: aggregateIngredients(items), idempotencyKey: key, createdAt: now, updatedAt: now })
-      return { orderId: order._id, duplicated: false }
-    })
-  }
-  publicOrder(order, tokenHash) {
-    const { creatorOpenid, idempotencyKey, ...visible } = order
-    return { ...visible, items: visible.items.map((item) => this.picture(item, tokenHash)) }
+  publicOrder(order, tokenHash, member) {
+    const { creatorOpenid, idempotencyKey, lastEdit, status, revision, ...visible } = order
+    const items = dishSet(visible.items)
+    return { ...visible, ingredientSummary: ingredientReferences(items), canEdit: this.canEditOrder(member), items: items.map((item) => {
+      // Older orders may predate the first photo. Enrich display only; never rewrite their snapshot.
+      const imageFileId = item.imageFileId || this.store.get('dishes', item.dishId)?.imageFileId || ''
+      return this.picture({ ...item, imageFileId }, tokenHash)
+    }) }
   }
   listOrders(openid, event, tokenHash) {
     const member = this.member(openid)
     const date = cleanText(event.orderDate, 10) || chinaDate()
     const admin = member.role === 'admin'
-    return { orders: this.store.listOrders(openid, date, admin).map((order) => this.publicOrder(order, tokenHash)), isAdmin: admin, orderDate: date }
+    const scope = event.scope || 'history'
+    if (!['history', 'today'].includes(scope)) fail('BAD_REQUEST', '订单查询范围不正确')
+    const result = this.store.listOrders(date, { scope, cursor: event.cursor, limit: event.limit })
+    return { orders: result.orders.map((order) => this.publicOrder(order, tokenHash, member)), nextCursor: result.nextCursor, scope, isAdmin: admin, orderDate: date }
   }
   getOrder(openid, event, tokenHash) {
     const member = this.member(openid)
     const order = this.store.get('orders', cleanText(event.orderId, 80))
     if (!order) fail('NOT_FOUND', '订单不存在')
-    if (member.role !== 'admin' && order.creatorOpenid !== openid) fail('FORBIDDEN', '你无权查看此订单')
-    return { order: this.publicOrder(order, tokenHash), isAdmin: member.role === 'admin' }
+    return { order: this.publicOrder(order, tokenHash, member), isAdmin: member.role === 'admin', canEdit: this.canEditOrder(member, order) }
   }
-  updateOrderStatus(openid, event) {
-    this.admin(openid)
-    return this.store.transaction(() => {
-      const order = this.store.get('orders', cleanText(event.orderId, 80))
-      if (!order) fail('NOT_FOUND', '订单不存在')
-      if (!canTransitionStatus(order.status, event.status)) fail('BAD_REQUEST', '不允许这样修改订单状态')
-      this.store.save('orders', { ...order, status: event.status, updatedAt: new Date().toISOString() })
-      return { status: event.status }
-    })
+  prepareReorder(openid, event, tokenHash) {
+    const { order } = this.getOrder(openid, event, tokenHash)
+    const items = [], unavailable = []
+    for (const previous of order.items) {
+      const current = this.store.get('dishes', previous.dishId)
+      if (!current?.enabled) { unavailable.push(previous.name); continue }
+      const dish = this.picture(current, tokenHash)
+      items.push({ dishId: dish._id, name: dish.name, imageFileId: dish.imageFileId,
+        description: dish.description })
+    }
+    return { items, unavailable, dinerCount: order.dinerCount, remark: order.remark }
+  }
+  prepareOrderEdit(openid, event, tokenHash) {
+    return this.shared.startActiveMenu(openid, { orderId: event.orderId }, tokenHash)
   }
 }
 

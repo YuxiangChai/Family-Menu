@@ -13,6 +13,7 @@ Page({
   onLoad(options) {
     this.dishId = options.id || ''
     this.setData({ navTitle: this.dishId ? '编辑菜品' : '新增菜品' })
+    wx.setNavigationBarTitle?.({ title: this.data.navTitle })
     this.loadForm()
   },
   async loadForm() {

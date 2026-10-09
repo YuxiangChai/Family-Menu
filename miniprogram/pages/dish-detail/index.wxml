@@ -1,15 +1,21 @@
-<custom-nav title="{{dish ? dish.name : '菜品详情'}}" />
-<view class="page page-with-cta detail-page">
-  <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在准备菜谱</view></view>
+<transition-page route="pages/dish-detail/index">
+<view class="dish-screen">
+<scroll-view wx:if="{{loading || error || !pageReady || !heroReady}}" class="detail-scroll" scroll-y>
+<view class="page detail-page">
+  <view wx:if="{{loading || (!error && (!pageReady || !heroReady))}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在准备菜谱</view></view>
   <view wx:elif="{{error}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">菜谱没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadDish">重试</button></view>
-  <block wx:else>
-    <image wx:if="{{dish.imageFileId}}" class="hero-image" src="{{dish.imageFileId}}" mode="aspectFill" aria-label="{{dish.name}}菜品图片" />
+</view>
+</scroll-view>
+<view wx:else class="detail-content">
+  <scroll-view class="detail-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+  <view class="page detail-page">
+    <image wx:if="{{heroSrc}}" class="hero-image" src="{{heroSrc}}" binderror="onHeroError" mode="aspectFill" aria-label="{{dish.name}}菜品图片" />
     <view wx:else class="hero-placeholder"><view class="hero-initial">{{dish.name[0]}}</view></view>
     <view class="title-card card">
       <text class="eyebrow">家常好味</text>
       <view class="dish-title serif-title">{{dish.name}}</view>
       <view wx:if="{{dish.description}}" class="muted">{{dish.description}}</view>
-      <view wx:if="{{dish.defaultServings || dish.cookingTime}}" class="meta-row"><view wx:if="{{dish.defaultServings}}"><text class="meta-value">{{dish.defaultServings}}</text><text class="meta-label"> 人份基准菜谱</text></view><view wx:if="{{dish.cookingTime}}"><text class="meta-value">{{dish.cookingTime}}</text><text class="meta-label"> 分钟</text></view></view>
+      <view wx:if="{{dish.cookingTime}}" class="meta-row"><view><text class="meta-value">{{dish.cookingTime}}</text><text class="meta-label"> 分钟</text></view></view>
     </view>
 
     <view wx:if="{{mainIngredients.length || seasonings.length}}" class="section card">
@@ -24,9 +30,12 @@
       <view class="section-title serif-title">怎么做</view>
       <view wx:for="{{dish.steps}}" wx:key="index" class="step-row"><view class="step-number">{{index + 1}}</view><view class="step-text">{{item}}</view></view>
     </view>
-  </block>
+  </view>
+  </scroll-view>
+  <view class="detail-actions">
+    <button wx:if="{{added}}" class="secondary-button cart-link" bindtap="goCart" hover-class="button-pressed">查看今晚菜单</button>
+    <button class="primary-button add-detail {{added ? 'is-selected' : ''}}" bindtap="addToCart" hover-class="button-pressed" loading="{{changing}}" disabled="{{changing || !menuReady}}">{{added ? '已选 · 移除' : '加入当前菜单'}}</button>
+  </view>
 </view>
-<view wx:if="{{dish}}" class="bottom-cta detail-actions">
-  <button wx:if="{{added}}" class="secondary-button cart-link" bindtap="goCart" hover-class="button-pressed">查看今晚菜单</button>
-  <button class="primary-button add-detail" bindtap="addToCart" hover-class="button-pressed">{{added ? '再加一份' : '加入今晚菜单'}}</button>
 </view>
+</transition-page>

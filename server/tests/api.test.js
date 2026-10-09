@@ -31,6 +31,15 @@ test('自建后端完整业务、持久化和权限', async (t) => {
   app.store.saveMember({ openid: identities.admin, nickname: '管理员', role: 'admin', enabled: true, createdAt: new Date().toISOString() })
   let inviteCode, minimalId, richId, orderId, imageUrl
   const orderPayload = (id, key) => ({ payload: { items: [{ dishId: id, servings: 2 }], dinerCount: 2, remark: '少盐', idempotencyKey: key } })
+  const place = async ({ payload }, token) => {
+    const started = await call('startActiveMenu', {}, token)
+    if (!started.ok) return started
+    const menuId = started.data.menu.menuId
+    const changed = await call('changeActiveMenu', { menuId, addDishIds: payload.items.map((item) => item.dishId),
+      dinerCount: payload.dinerCount, remark: payload.remark, idempotencyKey: payload.idempotencyKey }, token)
+    if (!changed.ok) { await call('cancelActiveMenu', { menuId }, tokens.admin); return changed }
+    return call('submitActiveMenu', { menuId }, token)
+  }
 
   await t.test('健康检查可访问，登录只信任微信换取的身份', async () => {
     assert.equal((await fetch(`${origin}/health`)).status, 200)
@@ -79,25 +88,29 @@ test('自建后端完整业务、持久化和权限', async (t) => {
 
   await t.test('无食材菜品可下单，同一提交标识不重复创建', async () => {
     const payload = orderPayload(minimalId, 'minimal-order')
-    const results = await Promise.all([call('createOrder', payload, tokens.member), call('createOrder', payload, tokens.member)])
+    const results = await Promise.all([place(payload, tokens.member), place(payload, tokens.member)])
     assert.equal(results[0].data.orderId, results[1].data.orderId)
     assert.equal(results.filter((item) => item.data.duplicated).length, 1)
     orderId = results[0].data.orderId
     const order = (await call('getOrder', { orderId }, tokens.member)).data.order
     assert.deepEqual(order.ingredientSummary, [])
     assert.equal(order.items[0].name, '清蒸鱼')
-    assert.equal(order.items[0].defaultServings, 1)
-    assert.equal(order.status, 'pending')
+    assert.equal(order.items[0].defaultServings, undefined)
+    assert.equal(order.items[0].servings, undefined)
+    assert.equal(order.status, undefined)
+    assert.equal(order.revision, undefined)
     assert.equal(order.creatorOpenid, undefined)
-    assert.equal((await call('getOrder', { orderId }, tokens.other)).status, 403)
-    assert.equal((await call('listOrders', {}, tokens.other)).data.orders.length, 0)
+    // Every enabled family member can view shared history, independently of notifications.
+    assert.equal((await call('getOrder', { orderId }, tokens.other)).status, 200)
+    assert.equal((await call('getOrder', { orderId }, tokens.stranger)).status, 403)
+    assert.equal((await call('listOrders', {}, tokens.other)).data.orders.length, 1)
     assert.equal((await call('listOrders', {}, tokens.admin)).data.orders.length, 1)
     const badDiners = orderPayload(minimalId, 'bad-count')
     badDiners.payload.dinerCount = 0
-    assert.equal((await call('createOrder', badDiners, tokens.member)).error.code, 'BAD_REQUEST')
+    assert.equal((await place(badDiners, tokens.member)).error.code, 'BAD_REQUEST')
     const bad = orderPayload(minimalId, 'invalid')
-    bad.payload.items[0].servings = 21
-    assert.equal((await call('createOrder', bad, tokens.member)).error.code, 'BAD_REQUEST')
+    bad.payload.items[0].dishId = 'missing'
+    assert.equal((await place(bad, tokens.member)).error.code, 'BAD_REQUEST')
   })
 
   await t.test('照片上传、签名访问和编辑后的持久引用', async () => {
@@ -122,8 +135,8 @@ test('自建后端完整业务、持久化和权限', async (t) => {
     assert.equal((await call('saveDish', { dish: { name: '外部图', imageFileId: 'https://attacker.invalid/test.png' } }, tokens.admin)).error.code, 'BAD_REQUEST')
   })
 
-  await t.test('食材缩放、订单快照和下架规则保持', async () => {
-    const placed = await call('createOrder', orderPayload(richId, 'rich-order'), tokens.member)
+  await t.test('食材参考用量、订单快照和下架规则保持', async () => {
+    const placed = await place(orderPayload(richId, 'rich-order'), tokens.member)
     const id = placed.data.orderId
     const before = (await call('getOrder', { orderId: id }, tokens.member)).data.order
     assert.equal(before.ingredientSummary[0].quantity, 3)
@@ -133,18 +146,40 @@ test('自建后端完整业务、持久化和权限', async (t) => {
     await call('toggleDish', { dishId: richId, enabled: false }, tokens.admin)
     assert.equal((await call('getDish', { dishId: richId }, tokens.member)).status, 404)
     assert.equal((await call('getDish', { dishId: richId }, tokens.admin)).status, 200)
-    assert.equal((await call('createOrder', orderPayload(richId, 'unlisted-order'), tokens.member)).ok, false)
+    assert.equal((await place(orderPayload(richId, 'unlisted-order'), tokens.member)).ok, false)
     assert((await call('listMenu', { includeDisabled: true }, tokens.admin)).data.dishes.some((item) => item._id === richId))
     assert(!(await call('listMenu', { includeDisabled: true }, tokens.member)).data.dishes.some((item) => item._id === richId))
   })
 
-  await t.test('只有管理员可以按合法顺序流转订单状态', async () => {
-    assert.equal((await call('updateOrderStatus', { orderId, status: 'confirmed' }, tokens.member)).status, 403)
-    assert.equal((await call('updateOrderStatus', { orderId, status: 'completed' }, tokens.admin)).ok, false)
-    for (const status of ['confirmed', 'cooking', 'completed']) assert.equal((await call('updateOrderStatus', { orderId, status }, tokens.admin)).ok, true)
-    assert.equal((await call('updateOrderStatus', { orderId, status: 'pending' }, tokens.admin)).ok, false)
-    const id = (await call('createOrder', orderPayload(minimalId, 'cancel-order'), tokens.member)).data.orderId
-    assert.equal((await call('updateOrderStatus', { orderId: id, status: 'cancelled' }, tokens.admin)).ok, true)
+  await t.test('全家同一菜单，增删和提交通过真实 HTTP 验证；旧整单接口和状态流程拒绝', async () => {
+    assert.equal((await call('updateOrderStatus', { orderId, status: 'confirmed' }, tokens.admin)).error.code, 'BAD_REQUEST')
+    assert.equal((await call('createOrder', orderPayload(minimalId, 'legacy'), tokens.other)).error.code, 'BAD_REQUEST')
+    assert.equal((await call('updateOrder', { orderId }, tokens.other)).error.code, 'BAD_REQUEST')
+    const menuId = (await call('prepareOrderEdit', { orderId }, tokens.other)).data.menu.menuId
+    assert.equal((await call('startActiveMenu', {}, tokens.member)).data.menu.menuId, menuId)
+    assert.equal((await call('startActiveMenu', { sourceOrderId: orderId }, tokens.admin)).status, 409)
+    const changes = { menuId, remark: '改少油', idempotencyKey: 'edit' }
+    assert.equal((await call('changeActiveMenu', changes, tokens.member)).ok, true)
+    assert.equal((await call('changeActiveMenu', changes, tokens.member)).data.duplicated, true)
+    const results = await Promise.all(['member', 'other'].map((name) => call('submitActiveMenu', { menuId }, tokens[name])))
+    assert(results.every((result) => result.data.orderId === orderId))
+    assert.equal(results.filter((result) => result.data.duplicated).length, 1)
+    assert.equal((await call('changeActiveMenu', { ...changes, idempotencyKey: 'late' }, tokens.admin)).status, 409)
+    assert.equal((await call('getOrder', { orderId }, tokens.member)).data.order.remark, '改少油')
+  })
+
+  await t.test('管理员只管理称呼和启用状态，旧厨师入口拒绝，普通用户不能提权', async () => {
+    const list = await call('listFamilyMembers', {}, tokens.admin)
+    assert.equal(list.ok, true)
+    assert(!JSON.stringify(list.data).includes(identities.member))
+    assert.equal((await call('listFamilyMembers', {}, tokens.member)).status, 403)
+    const target = list.data.members.find((member) => member.nickname === '另一位家人')
+    assert.equal((await call('updateFamilyMember', { memberId: target._id, role: 'admin' }, tokens.admin)).status, 403)
+    assert.equal((await call('updateFamilyMember', { memberId: target._id, isChef: true }, tokens.admin)).status, 400)
+    assert.equal((await call('updateFamilyMember', { memberId: target._id, nickname: '普通用户' }, tokens.other)).status, 403)
+    assert.equal((await call('updateFamilyMember', { memberId: target._id, nickname: '另一位家人' }, tokens.admin)).data.member.role, 'member')
+    assert.equal((await call('getProfile', {}, tokens.other)).data.member.isChef, undefined)
+    assert.equal((await call('saveDish', { dish: { name: '不可提权' } }, tokens.other)).status, 403)
   })
 
   await t.test('更换邀请码不移除老成员，禁用账号无法重新加入或读图片', async () => {
@@ -204,6 +239,18 @@ test('自建后端完整业务、持久化和权限', async (t) => {
     for (let i = 0; i < 10; i++) assert.equal((await call('joinFamily', { inviteCode: 'WRONGCODE' }, token)).error.code, 'INVALID_INVITE_CODE')
     assert.equal((await call('joinFamily', { inviteCode: 'WRONGCODE' }, token)).status, 429)
   })
+
+  await t.test('历史和复制接口保留；旧订阅、通知接口停用且不再新增消息', async () => {
+    for (const action of ['getNotificationStatus', 'recordSubscription', 'listNotifications', 'markNotificationRead']) assert.equal((await call(action, {}, tokens.admin)).error.code, 'BAD_REQUEST')
+    assert.equal(app.store.db.prepare('SELECT count(*) AS n FROM notifications').get().n, 0)
+    assert.equal(app.store.db.prepare('SELECT count(*) AS n FROM notification_outbox').get().n, 0)
+    const draft = (await call('prepareReorder', { orderId }, tokens.admin)).data
+    assert.equal(draft.items[0].name, '清蒸鱼')
+    assert.equal(draft.items[0].servings, undefined)
+    assert.equal((await call('listOrders', { scope: 'history', limit: 1 }, tokens.admin)).data.orders.length, 1)
+    assert.equal((await call('getOrder', { orderId })).status, 401)
+  })
+
 })
 
 test('菜名是唯一必填项；有值的数字仍需合法', () => {

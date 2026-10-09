@@ -1,4 +1,5 @@
 .profile-page { padding-top: 32rpx; padding-bottom: 96rpx; }
+.message-entry { margin-top: 16rpx; }
 .identity { position: relative; overflow: hidden; padding: 28rpx; display: flex; align-items: center; gap: 22rpx; border: 0; background: linear-gradient(135deg, #272923 0%, #34372f 100%); color: #fffdf8; }
 .identity::after { content: ""; position: absolute; right: -44rpx; top: -52rpx; width: 180rpx; height: 180rpx; border: 24rpx solid rgba(255,255,255,.045); border-radius: 50%; }
 .avatar { position: relative; z-index: 1; width: 92rpx; height: 92rpx; flex: none; border-radius: 24rpx; display: flex; align-items: center; justify-content: center; background: var(--brand); color: #fff; font-size: 39rpx; font-weight: 800; box-shadow: inset 0 0 0 1rpx rgba(255,255,255,.18); }

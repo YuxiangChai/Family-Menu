@@ -13,6 +13,7 @@ require('../miniprogram/pages/index/index')
 
 function pageContext(data) {
   return {
+    ...pageDefinition,
     data,
     setData(patch) {
       this.data = { ...this.data, ...patch }

@@ -1,0 +1,28 @@
+<transition-page route="pages/family-members/index">
+<view class="page members-page">
+  <view class="page-header"><text class="page-header-kicker">一起吃饭的人</text><view class="page-header-title">家庭成员</view><view class="page-header-meta">只有管理员能修改称呼和账号状态。</view></view>
+  <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在查看成员</view></view>
+  <view wx:elif="{{error && !members.length}}" class="state-panel card"><view class="state-title">成员名单没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadMembers">重试</button></view>
+  <view wx:elif="{{selected}}" class="editor card">
+    <view class="editor-title">管理 {{selected.nickname}}</view>
+    <view class="field-label">家人的称呼</view>
+    <button class="field-input nickname-button" bindtap="editNickname" disabled="{{saving}}" aria-label="修改家人的称呼"><text>{{nickname || '点击填写称呼'}}</text><text class="nickname-edit">修改 ›</text></button>
+    <view class="role-help">称呼与权限修改后，点击“保存修改”才会生效。</view>
+    <view wx:if="{{selected.isAdmin}}" class="fixed-role">管理员权限固定保留，不能转让、降级或停用。</view>
+    <block wx:if="{{!selected.isAdmin}}">
+      <view class="enabled-row"><view class="enabled-main"><view class="field-label">允许访问家庭</view><view class="role-help">{{enabled ? '已启用，可正常使用小程序' : '已停用，不能查看菜单、下单或通过邀请码重新加入'}}</view></view><switch class="permission-switch" checked="{{enabled}}" bindchange="onEnabled" disabled="{{saving}}" color="#426b52" aria-label="允许该成员访问家庭" /></view>
+    </block>
+    <view class="editor-actions"><button class="secondary-button editor-button" bindtap="closeEditor" disabled="{{saving}}">返回列表</button><button class="primary-button editor-button" bindtap="saveMember" loading="{{saving}}" disabled="{{saving}}">保存修改</button></view>
+  </view>
+  <block wx:else>
+    <view class="role-guide card"><view class="guide-title">普通用户与管理员</view><view>所有家人：点菜、查看和分享全家订单、再点一次。</view><view>普通用户可修改自己下的订单。</view><view>管理员仅你拥有，可修改所有订单，并管理菜品、邀请码和成员。</view><view class="role-help">不再需要确认或处理订单。历史订单包含加入前的订单。</view></view>
+    <view class="member-count">{{members.length}} 位家庭成员</view>
+    <view wx:for="{{members}}" wx:key="_id" class="member-card card">
+      <view class="member-top"><view class="member-name">{{item.nickname}}</view><text class="member-status">{{item.enabled ? '已启用' : '已停用'}}</text></view>
+      <view class="member-role">{{item.isAdmin ? '唯一管理员' : '普通用户'}}</view>
+      <button class="secondary-button" data-id="{{item._id}}" bindtap="editMember" hover-class="button-pressed" aria-label="管理 {{item.nickname}} 的属性">{{item.isAdmin ? '管理我的属性' : '管理成员属性'}}</button>
+    </view>
+  </block>
+  <view wx:if="{{error && members.length}}" class="state-text">{{error}}<button class="secondary-button" bindtap="loadMembers">重试更新</button></view>
+</view>
+</transition-page>

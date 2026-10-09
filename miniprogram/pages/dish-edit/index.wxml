@@ -1,4 +1,4 @@
-<custom-nav title="{{navTitle}}" />
+<transition-page route="pages/dish-edit/index">
 <view class="page page-with-cta edit-page">
   <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在打开菜谱</view></view>
   <view wx:elif="{{error && !dish.name && categories.length === 0}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">表单没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadForm">重试</button></view>
@@ -14,13 +14,12 @@
       <label class="field-label" for="name">菜品名称 *</label><input id="name" class="field-input" value="{{dish.name}}" data-field="name" bindinput="updateField" maxlength="40" placeholder="例如：番茄炒蛋" />
       <label class="field-label">分类（可选）</label><picker mode="selector" range="{{categoryNames}}" value="{{categoryIndex}}" bindchange="changeCategory"><view class="field-picker">{{categoryNames[categoryIndex] || '不分类'}} <text>⌄</text></view></picker>
       <label class="field-label" for="description">介绍（可选）</label><textarea id="description" class="field-input description-input" value="{{dish.description}}" data-field="description" bindinput="updateField" maxlength="300" placeholder="这道菜的口味或特点" />
-      <label class="field-label" for="servings">菜谱基准人份（可选）</label><input id="servings" class="field-input" type="number" value="{{dish.defaultServings}}" data-field="defaultServings" bindinput="updateField" placeholder="留空时按 1 份计算食材" />
       <label class="field-label" for="cooking-time">制作时间（可选，分钟）</label><input id="cooking-time" class="field-input" type="number" value="{{dish.cookingTime}}" data-field="cookingTime" bindinput="updateField" placeholder="可以留空" />
       <view class="switch-row"><view><view class="switch-title">上架菜品</view><view class="muted switch-desc">关闭后家庭成员看不到这道菜</view></view><switch checked="{{dish.enabled}}" bindchange="changeEnabled" color="#B94732" /></view>
     </view>
 
     <view class="form-section card">
-      <view class="section-heading"><view><view class="serif-title section-title">原料与配料</view><view class="muted helper">数字用量会按份数自动合并</view></view><view class="mini-add" bindtap="addIngredient" hover-class="control-pressed" role="button"><text class="mini-add-icon">＋</text><text>添加原料</text></view></view>
+      <view class="section-heading"><view><view class="serif-title section-title">原料与配料</view><view class="muted helper">用量仅作参考，实际做多少由家里决定</view></view><view class="mini-add" bindtap="addIngredient" hover-class="control-pressed" role="button"><text class="mini-add-icon">＋</text><text>添加原料</text></view></view>
       <view wx:for="{{dish.ingredients}}" wx:key="index" class="ingredient-editor">
         <view class="editor-top">
           <view class="ingredient-title"><text class="ingredient-number">0{{index + 1}}</text><text>原料</text></view>
@@ -45,3 +44,4 @@
   </block>
 </view>
 <view wx:if="{{!loading}}" class="bottom-cta"><button class="primary-button" bindtap="saveDish" disabled="{{saving || uploading}}" loading="{{saving}}">{{saving ? '正在保存…' : '保存菜品'}}</button></view>
+</transition-page>

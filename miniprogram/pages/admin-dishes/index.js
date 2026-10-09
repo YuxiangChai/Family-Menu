@@ -2,15 +2,25 @@ const api = require('../../utils/api')
 
 Page({
   data: { loading: true, error: '', dishes: [] },
-  onShow() { this.loadDishes() },
+  onShow() { return this.loadDishes() },
+  onUnload() { this.generation = (this.generation || 0) + 1 },
   async loadDishes() {
-    this.setData({ loading: true, error: '' })
+    const generation = this.generation = (this.generation || 0) + 1
+    this.setData({ loading: !this.loaded, error: '' })
     try {
       const result = await api.call('listMenu', { includeDisabled: true })
+      if (generation !== this.generation) return
+      this.loaded = true
       const categoryMap = {}
       result.categories.forEach((item) => { categoryMap[item._id] = item.name })
-      this.setData({ loading: false, dishes: result.dishes.map((dish) => ({ ...dish, displayInitial: dish.name.slice(0, 1), categoryName: categoryMap[dish.categoryId] || '未分类' })) })
-    } catch (error) { this.setData({ loading: false, error: error.message }) }
+      const dishes = result.dishes.map((dish) => ({ ...dish, displayInitial: dish.name.slice(0, 1), categoryName: categoryMap[dish.categoryId] || '未分类' }))
+      this.setData({ loading: false, ...(JSON.stringify(dishes) !== JSON.stringify(this.data.dishes) ? { dishes } : {}) })
+    } catch (error) {
+      if (generation !== this.generation) return
+      const revoked = ['UNAUTHORIZED', 'ACCOUNT_DISABLED', 'AUTH_EXPIRED', 'FORBIDDEN'].includes(error.code)
+      if (revoked) this.loaded = false
+      this.setData({ loading: false, error: error.message, ...(revoked ? { dishes: [] } : {}) })
+    }
   },
   addDish() { wx.navigateTo({ url: '/pages/dish-edit/index' }) },
   editDish(event) { wx.navigateTo({ url: `/pages/dish-edit/index?id=${event.currentTarget.dataset.id}` }) },

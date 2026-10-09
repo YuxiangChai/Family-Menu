@@ -1,4 +1,4 @@
-<custom-nav title="家庭邀请码" />
+<transition-page route="pages/invite-settings/index">
 <view class="page invite-page">
   <view class="heading">
     <text class="eyebrow">FAMILY INVITATION</text>
@@ -7,7 +7,7 @@
   </view>
 
   <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在检查邀请码</view></view>
-  <view wx:elif="{{error}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">暂时没打开</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadStatus">重试</button></view>
+  <view wx:elif="{{error && !statusReady}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">暂时没打开</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadStatus">重试</button></view>
   <block wx:else>
     <view class="status-card card">
       <view class="status-top"><view class="status-icon">{{configured ? '✓' : '·'}}</view><view><view class="status-title">{{configured ? '邀请码已启用' : '还没有邀请码'}}</view><view class="status-copy">{{configured ? '你可以更换邀请码，已加入的家人不会退出。' : '先生成一个安全的邀请码。'}}</view></view></view>
@@ -23,14 +23,16 @@
     <view class="action-card card">
       <view class="action-title">生成随机邀请码</view>
       <view class="action-desc">推荐使用。会生成一段容易复制、较难猜中的 12 位字符串。</view>
-      <button class="random-button" bindtap="generateCode" loading="{{saving}}" disabled="{{saving}}" hover-class="button-pressed"><text class="random-mark">✦</text><text>{{configured ? '生成新的邀请码' : '生成邀请码'}}</text></button>
+      <button class="random-button" bindtap="generateCode" loading="{{saving}}" disabled="{{saving || !!error}}" hover-class="button-pressed"><text class="random-mark">✦</text><text>{{configured ? '生成新的邀请码' : '生成邀请码'}}</text></button>
 
       <view class="or-divider"><text></text><view>或者自己设置</view><text></text></view>
       <label class="field-label" for="custom-code">自定义邀请码</label>
       <input id="custom-code" class="field-input custom-input" value="{{customCode}}" bindinput="onCodeInput" maxlength="40" placeholder="8–32 位字母或数字" placeholder-class="placeholder" />
       <view class="input-help">不区分大小写，输入时可以带空格或横线。</view>
-      <button class="secondary-button save-custom" bindtap="saveCustomCode" disabled="{{saving}}" hover-class="button-pressed">保存自定义邀请码</button>
+      <button class="secondary-button save-custom" bindtap="saveCustomCode" disabled="{{saving || !!error}}" hover-class="button-pressed">保存自定义邀请码</button>
     </view>
     <view class="security-line"><text>✓</text><view>邀请码只负责加入家庭，管理员权限不能通过邀请码获得</view></view>
   </block>
+  <view wx:if="{{error && statusReady}}" class="state-text">{{error}}<button class="secondary-button" bindtap="loadStatus">重试更新</button></view>
 </view>
+</transition-page>

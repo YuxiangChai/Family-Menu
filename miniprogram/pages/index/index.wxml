@@ -26,6 +26,8 @@
   </view>
 
   <block wx:else>
+    <view wx:if="{{menuRefreshError}}" class="edit-banner card"><view>{{menuRefreshError}}</view><button class="secondary-button" bindtap="loadMenu">重试更新</button></view>
+    <view wx:if="{{syncError}}" class="edit-banner card"><view>{{syncError}}</view><button class="secondary-button" bindtap="refreshActive">重试同步</button></view>
     <view class="sticky-tools">
       <view class="search-box"><text class="search-symbol">⌕</text><input value="{{keyword}}" bindinput="onSearch" placeholder="搜索菜名" placeholder-class="placeholder" confirm-type="search" aria-label="搜索菜品" /></view>
       <scroll-view class="category-scroll" scroll-x enhanced show-scrollbar="{{false}}">
@@ -47,7 +49,7 @@
             <view wx:else class="dish-placeholder"><text class="plate-mark">{{dish.displayInitial}}</text></view>
             <view class="dish-body">
               <view class="dish-name">{{dish.name}}</view>
-              <view class="add-button" catchtap="addDish" data-id="{{dish._id}}" hover-class="button-pressed" role="button" tabindex="0" aria-label="今晚想吃{{dish.name}}">今晚想吃</view>
+              <view class="dish-action" catchtap="addDish" data-id="{{dish._id}}" data-selected="{{dish.selected}}"><button class="add-button {{dish.selected ? 'is-selected' : ''}}" catchtap="addDish" data-id="{{dish._id}}" data-selected="{{dish.selected}}" hover-class="button-pressed" loading="{{changingDishId === dish._id}}" disabled="{{!menuReady || !!changingDishId}}" aria-label="{{dish.selected ? '从当前菜单移除' : '加入当前菜单'}}{{dish.name}}">{{dish.selected ? '已选 · 移除' : '今晚想吃'}}</button></view>
             </view>
           </view>
         </view>
@@ -56,4 +58,4 @@
     <view wx:else class="state-panel card compact"><view class="state-mark">⌕</view><view class="state-title">没有找到这道菜</view><view class="state-text">换个关键词再找找。</view></view>
   </block>
 </view>
-<view wx:if="{{!loading && !error && !unauthorized && cartCount > 0}}" class="cart-fab" bindtap="openCart" hover-class="button-pressed" role="button" tabindex="0" aria-label="打开今晚菜单，共{{cartCount}}道菜"><text>菜单</text><text class="cart-count">{{cartCount}}</text></view>
+<view wx:if="{{!loading && !error && !unauthorized && activeMenuId}}" class="menu-dock"><button class="cart-fab" bindtap="openCart" hover-class="button-pressed" aria-label="打开全家当前菜单，共{{cartCount}}道菜"><view class="cart-pill"><text class="cart-label">当前菜单</text><text class="cart-count">{{cartCount}}</text></view></button></view>

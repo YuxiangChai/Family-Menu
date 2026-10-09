@@ -17,6 +17,9 @@ async function main() {
       if (!values.openid || !/^[A-Za-z0-9_-]{10,80}$/.test(values.openid)) throw new Error('请用 --openid 指定“我的”页显示的真实 OpenID')
       if (values.enabled && !['true', 'false'].includes(values.enabled)) throw new Error('--enabled 只能填写 true 或 false')
       const previous = store.member(values.openid)
+      const owner = store.members().find((member) => member.role === 'admin')
+      if (command === 'admin' && owner && owner.openid !== values.openid) throw new Error('管理员已固定为原账号，不能新增或转让管理员')
+      if ((command === 'admin' || previous?.role === 'admin') && values.enabled === 'false') throw new Error('不能停用管理员账号')
       const member = store.saveMember({ ...previous, openid: values.openid,
         nickname: (values.nickname || previous?.nickname || '家人').trim().slice(0, 20) || '家人',
         role: command === 'admin' ? 'admin' : previous?.role || 'member',

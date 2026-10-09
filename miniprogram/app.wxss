@@ -11,7 +11,7 @@ page {
   --leaf: #426b52;
   --warning: #a55d20;
   --danger: #ad3e35;
-  background: linear-gradient(180deg, #f7f1e8 0, var(--canvas) 360rpx);
+  background: var(--canvas);
   color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
   font-size: 28rpx;
@@ -32,7 +32,7 @@ button {
 
 button::after { border: 0; }
 
-.page { min-height: 100vh; padding: 28rpx 24rpx 64rpx; }
+.page { min-height: 0; padding: 28rpx 24rpx 64rpx; background: var(--canvas); }
 .page-with-cta { padding-bottom: calc(164rpx + env(safe-area-inset-bottom)); }
 .serif-title { font-family: inherit; font-weight: 700; letter-spacing: -1rpx; }
 .muted { color: var(--muted); }
@@ -64,7 +64,7 @@ button::after { border: 0; }
 .primary-button[disabled] { opacity: .45; box-shadow: none; }
 .secondary-button { color: var(--brand-dark); background: var(--brand-soft); }
 .danger-button { color: var(--danger); background: #f8e2dd; }
-.button-pressed { opacity: .72; transform: scale(.985); }
+.button-pressed { opacity: .72; }
 
 .icon-button {
   width: 88rpx;

@@ -1,20 +1,24 @@
+.order-detail-page { min-height: 0; padding-bottom: calc(24rpx + env(safe-area-inset-bottom)); }
 .order-hero { margin-top: 4rpx; padding: 28rpx; display: flex; align-items: flex-start; justify-content: space-between; gap: 18rpx; border-top: 5rpx solid var(--gold); }
 .hero-title { margin: 4rpx 0 6rpx; font-size: 38rpx; }
+.hero-date { color: var(--brand-dark); font-size: 26rpx; font-weight: 700; line-height: 1.5; }
 .section { margin-top: 18rpx; padding: 26rpx; }
 .section-title { font-size: 32rpx; }
 .section-heading { display: flex; justify-content: space-between; align-items: center; }
 .total { font-size: 21rpx; }
-.dish-row { position: relative; min-height: 82rpx; padding: 17rpx 4rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; }
-.dish-row + .dish-row::before { content: ""; position: absolute; top: 0; left: 4rpx; right: 4rpx; height: 1rpx; background: linear-gradient(90deg, transparent 0%, #ddd3c6 9%, #ddd3c6 91%, transparent 100%); }
-.dish-name { font-weight: 700; line-height: 1.45; }
-.servings { flex: none; color: var(--brand); font-size: 23rpx; font-weight: 700; }
-.remark { margin-top: 18rpx; padding: 18rpx; border-left: 4rpx solid var(--gold); background: var(--paper-deep); font-size: 24rpx; }
-.remark-label { display: block; margin-bottom: 4rpx; color: var(--brand-dark); font-size: 20rpx; font-weight: 800; }
 .ingredient-row { min-height: 82rpx; padding: 14rpx 0; display: flex; align-items: center; justify-content: space-between; gap: 16rpx; border-bottom: 1rpx solid var(--line); font-size: 24rpx; }
 .ingredient-main { min-width: 0; }
 .ingredient-name { font-weight: 700; }
 .note { font-size: 20rpx; }
 .sources { margin-top: 2rpx; color: var(--muted); font-size: 20rpx; overflow-wrap: anywhere; }
 .amount { flex: none; color: var(--leaf); font-weight: 800; }
-.action-bar { display: flex; gap: 12rpx; }
-.action-bar button { min-width: 0; flex: 1; font-size: 24rpx; }
+.poster-canvas { position: fixed; left: -2000px; top: 0; width: 600px; height: 600px; pointer-events: none; }
+.poster-frame { position: relative; width: 100%; margin: 24rpx 0; border-radius: 14rpx; background: var(--canvas); }
+.poster-preview { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 100%; border-radius: 14rpx; }
+.poster-state { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); }
+.poster-error { margin: 24rpx 0; color: var(--danger); }
+.share-action { display: flex; width: 100%; margin-top: 24rpx; }
+.share-section .share-button { flex: 1; width: 100%; max-width: none; min-width: 0; margin: 0; font-size: 28rpx; }
+.order-tools { display: flex; gap: 16rpx; margin-top: 16rpx; }
+.order-tools .secondary-button { min-width: 0; max-width: none; margin: 0; flex: 1; font-size: 26rpx; }
+.poster-retry { margin-top: 16rpx; }

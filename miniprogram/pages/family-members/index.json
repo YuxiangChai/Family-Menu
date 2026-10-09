@@ -1,0 +1,6 @@
+{
+  "navigationStyle": "default",
+  "navigationBarTitleText": "家庭成员管理",
+  "enablePullDownRefresh": true,
+  "usingComponents": { "transition-page": "/components/transition-page/index" }
+}

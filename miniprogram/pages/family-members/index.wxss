@@ -1,0 +1,21 @@
+.members-page { padding-bottom: calc(64rpx + env(safe-area-inset-bottom)); }
+.role-guide, .editor { padding: 28rpx; }
+.guide-title, .editor-title { font-size: 32rpx; font-weight: 700; margin-bottom: 16rpx; }
+.role-guide view + view { margin-top: 12rpx; }
+.role-guide { font-size: 28rpx; }
+.role-help { margin-top: 12rpx; color: var(--muted); font-size: 26rpx; line-height: 1.65; }
+.member-count { margin: 28rpx 6rpx 16rpx; color: var(--muted); font-size: 26rpx; }
+.member-card { margin-bottom: 20rpx; padding: 28rpx; }
+.member-top { display: flex; justify-content: space-between; align-items: center; gap: 16rpx; }
+.member-name { flex: 1; min-width: 0; overflow-wrap: break-word; font-weight: 700; font-size: 32rpx; }
+.member-status { color: var(--muted); font-size: 26rpx; }
+.member-role { color: var(--leaf); margin: 12rpx 0 24rpx; font-size: 28rpx; }
+.fixed-role { margin-top: 24rpx; color: var(--leaf); font-size: 28rpx; }
+.nickname-button { width: 100%; min-height: 92rpx; display: flex; align-items: center; justify-content: space-between; gap: 16rpx; text-align: left; }
+.nickname-edit { flex: none; color: var(--brand-dark); font-size: 26rpx; }
+.enabled-row { display: flex; align-items: center; gap: 24rpx; margin: 28rpx 0; }
+.enabled-main { flex: 1; min-width: 0; }
+.enabled-row .field-label { margin-top: 0; }
+.permission-switch { flex: none; min-height: 88rpx; display: flex; align-items: center; }
+.editor-actions { display: flex; gap: 16rpx; margin-top: 32rpx; }
+.editor-button { flex: 1; }

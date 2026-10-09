@@ -8,10 +8,13 @@
     "pages/order-detail/index",
     "pages/admin-dishes/index",
     "pages/invite-settings/index",
-    "pages/dish-edit/index"
+    "pages/dish-edit/index",
+    "pages/family-members/index"
   ],
   "window": {
     "backgroundColor": "#F2EDE4",
+    "backgroundColorTop": "#F2EDE4",
+    "backgroundColorBottom": "#F2EDE4",
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#F7F1E8",
     "navigationBarTitleText": "小柴的菜单",
@@ -31,7 +34,7 @@
       },
       {
         "pagePath": "pages/orders/index",
-        "text": "今晚订单",
+        "text": "历史订单",
         "iconPath": "images/icons/goods.png",
         "selectedIconPath": "images/icons/goods-active.png"
       },

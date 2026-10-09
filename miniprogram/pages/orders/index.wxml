@@ -1,13 +1,16 @@
 <view class="page orders-page">
-  <view class="page-header"><text class="page-header-kicker">{{isAdmin ? '今日灶台' : '我的点菜'}}</text><view class="page-header-title">今晚订单</view><view class="page-header-meta">{{today}}{{isAdmin ? ' · 全部家庭订单' : ''}}</view></view>
+  <view class="page-header"><text class="page-header-kicker">每一次家常饭</text><view class="page-header-title">历史订单</view><view class="page-header-meta">找到喜欢的一餐，再点一次 · 家庭共享订单</view></view>
   <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在查看订单</view></view>
-  <view wx:elif="{{error}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">订单没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadOrders">重试</button></view>
+  <view wx:elif="{{error && !orders.length}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">订单没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadOrders">重试</button></view>
   <view wx:elif="{{!orders.length}}" class="state-panel card"><view class="state-mark">0</view><view class="state-title">还没有点菜</view><view class="state-text">从菜单挑几道菜，提交后会出现在这里。</view></view>
   <view wx:else class="order-list">
     <view wx:for="{{orders}}" wx:key="_id" class="order-card card" data-id="{{item._id}}" bindtap="openOrder" hover-class="order-pressed">
-      <view class="order-top"><view><view class="creator">{{item.creatorName || '家人'}} 的菜单</view><view class="time">{{item.timeText}}</view></view><text class="status-chip {{item.statusClass}}">{{item.statusText}}</text></view>
-      <view class="order-items">{{item.itemText}}</view>
-      <view class="order-bottom"><text>{{item.dinerCount}} 人用餐</text><text>查看清单 ›</text></view>
+      <view class="order-top"><view class="order-heading"><view class="order-date-row"><text class="order-date">{{item.dateText}}</text><text wx:if="{{item.weekdayText}}" class="order-weekday">{{item.weekdayText}}</text></view><view class="creator">{{item.creatorName || '家人'}}</view><view class="time">{{item.timeText}} · {{item.dinerCount}} 人用餐</view></view></view>
+      <view class="order-items"><view wx:for="{{item.previewItems}}" wx:for-item="dish" wx:key="dishId" class="preview-dish"><text class="preview-name">{{dish.name}}</text></view><view wx:if="{{!item.previewItems.length}}" class="more-dishes">暂未选菜</view><view wx:if="{{item.remainingCount}}" class="more-dishes">还有 {{item.remainingCount}} 道菜</view></view>
+      <view class="order-bottom"><button class="primary-button order-button" hover-class="button-pressed" data-id="{{item._id}}" catchtap="shareOrder" loading="{{sharingId === item._id}}" disabled="{{!!sharingId || !!copyingId}}" aria-label="分享这份订单图片">分享</button><button class="secondary-button order-button" hover-class="button-pressed" data-id="{{item._id}}" catchtap="copyOrder" loading="{{copyingId === item._id}}" disabled="{{!!copyingId || !!sharingId}}" aria-label="将这份订单复制到今晚菜单">再点一次</button></view>
     </view>
   </view>
+  <view wx:if="{{error && orders.length}}" class="state-text load-error">{{error}}</view>
+  <button wx:if="{{nextCursor && !loading}}" class="secondary-button load-more" bindtap="loadMore" loading="{{loadingMore}}" disabled="{{loadingMore || refreshing}}">加载更多</button>
 </view>
+<canvas type="2d" id="order-poster" class="poster-canvas" />

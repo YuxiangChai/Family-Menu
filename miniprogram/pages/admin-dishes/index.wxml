@@ -1,8 +1,8 @@
-<custom-nav title="菜品管理" />
+<transition-page route="pages/admin-dishes/index">
 <view class="page page-with-cta">
   <view class="heading"><text class="eyebrow">管理员</text><view class="serif-title title">菜品管理</view><view class="muted">下架代替删除，历史订单会保留原菜品快照。</view></view>
   <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在整理菜谱</view></view>
-  <view wx:elif="{{error}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">菜品没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadDishes">重试</button></view>
+  <view wx:elif="{{error && !dishes.length}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">菜品没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadDishes">重试</button></view>
   <view wx:elif="{{!dishes.length}}" class="state-panel card"><view class="state-mark">＋</view><view class="state-title">还没有菜品</view><view class="state-text">先新增一道家里拿手的菜。</view></view>
   <view wx:else class="dish-list">
     <view wx:for="{{dishes}}" wx:key="_id" class="dish-row card {{item.enabled ? '' : 'disabled-row'}}">
@@ -11,5 +11,7 @@
       <view class="toggle {{item.enabled ? 'off' : 'on'}}" data-id="{{item._id}}" data-enabled="{{item.enabled}}" bindtap="toggleDish" hover-class="toggle-pressed" role="button" tabindex="0" aria-label="{{item.enabled ? '下架' : '上架'}}{{item.name}}"><text class="toggle-dot"></text><text>{{item.enabled ? '下架' : '上架'}}</text></view>
     </view>
   </view>
+  <view wx:if="{{error && dishes.length}}" class="state-text">{{error}}<button class="secondary-button" bindtap="loadDishes">重试更新</button></view>
 </view>
-<view class="bottom-cta"><button class="primary-button" bindtap="addDish" hover-class="button-pressed">新增菜品</button></view>
+<view wx:if="{{!loading && !error}}" class="bottom-cta"><button class="primary-button" bindtap="addDish" hover-class="button-pressed">新增菜品</button></view>
+</transition-page>

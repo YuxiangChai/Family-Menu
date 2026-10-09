@@ -1,0 +1,27 @@
+<custom-nav title="家人点菜消息" />
+<view class="page">
+  <view class="page-header"><text class="page-header-kicker">一起吃饭</text><view class="page-header-title">家人点菜消息</view><view class="page-header-meta">谁点了什么，在这里看看。</view></view>
+  <view wx:if="{{loading}}" class="state-panel card"><view class="state-title">正在查看消息</view></view>
+  <view wx:elif="{{error && !status}}" class="state-panel card"><view class="state-title">消息没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadMessages">重试</button></view>
+  <block wx:else>
+    <view class="subscription card">
+      <view class="subscription-title">微信点菜提醒</view>
+      <view wx:if="{{!status.configured}}" class="subscription-description">微信模板尚未配置。家人下单后仍会出现在下面，进入页面或下拉刷新查看。</view>
+      <block wx:else>
+        <view class="subscription-description">点击允许后，家人下单时会尝试发送微信“服务通知”。一次性模板每次授权通常只能发送一次；用完后可再次订阅。</view>
+        <view wx:if="{{status.enabled}}" class="subscription-state">已提交订阅申请，实际发送权限以微信为准。</view>
+        <button class="primary-button" bindtap="subscribe" loading="{{subscribing}}" disabled="{{subscribing}}" hover-class="button-pressed">{{status.enabled ? '再次订阅点菜提醒' : '订阅下次点菜提醒'}}</button>
+        <button wx:if="{{status.enabled}}" class="stop-reminders" bindtap="disable" disabled="{{subscribing}}">停止微信提醒</button>
+      </block>
+    </view>
+    <view class="section-heading"><text>家人的新订单</text><text>{{status.unreadCount}} 条未读</text></view>
+    <view wx:if="{{!notifications.length}}" class="state-panel card"><view class="state-title">还没有家人点菜</view><view class="state-text">其他已加入的家人下单后，消息会出现在这里。</view></view>
+    <button wx:for="{{notifications}}" wx:key="_id" class="message-card card" data-id="{{item._id}}" data-order-id="{{item.orderId}}" bindtap="openOrder" hover-class="button-pressed" aria-label="查看{{item.creatorName}}的点菜">
+      <view class="message-top"><view>{{item.creatorName}} 下单了<text wx:if="{{!item.read}}" class="unread-dot"></text></view><text>{{item.read ? '已读' : '未读'}}</text></view>
+      <view class="message-items">{{item.itemText}}</view>
+      <view class="message-bottom"><text>{{item.timeText}} · {{item.dinerCount}} 人</text><text>查看菜单 ›</text></view>
+    </button>
+    <view wx:if="{{error}}" class="state-text">{{error}}</view>
+    <button wx:if="{{nextOffset != null}}" class="secondary-button" bindtap="loadMore" loading="{{loadingMore}}" disabled="{{loadingMore}}">加载更多消息</button>
+  </block>
+</view>

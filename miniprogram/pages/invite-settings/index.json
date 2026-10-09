@@ -1,6 +1,5 @@
 {
-  "navigationStyle": "custom",
-  "usingComponents": {
-    "custom-nav": "/components/custom-nav/index"
-  }
+  "navigationStyle": "default",
+  "navigationBarTitleText": "家庭邀请码",
+  "usingComponents": { "transition-page": "/components/transition-page/index" }
 }

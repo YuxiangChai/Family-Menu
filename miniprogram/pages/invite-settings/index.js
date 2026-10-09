@@ -3,20 +3,27 @@ const api = require('../../utils/api')
 Page({
   data: {
     loading: true,
+    statusReady: false,
     error: '',
     configured: false,
     customCode: '',
     currentCode: '',
     saving: false
   },
-  onLoad() { this.loadStatus() },
+  onLoad() { return this.loadStatus() },
+  onUnload() { this.generation = (this.generation || 0) + 1 },
   async loadStatus() {
-    this.setData({ loading: true, error: '' })
+    const generation = this.generation = (this.generation || 0) + 1
+    this.setData({ loading: !this.data.statusReady, error: '' })
     try {
       const result = await api.call('getInviteStatus')
-      this.setData({ loading: false, configured: result.configured })
+      if (generation !== this.generation) return
+      this.setData({ loading: false, statusReady: true, configured: result.configured })
     } catch (error) {
-      this.setData({ loading: false, error: error.message })
+      if (generation !== this.generation) return
+      const revoked = ['UNAUTHORIZED', 'ACCOUNT_DISABLED', 'AUTH_EXPIRED', 'FORBIDDEN'].includes(error.code)
+      this.setData({ loading: false, error: error.message,
+        ...(revoked ? { statusReady: false, configured: false, currentCode: '', customCode: '' } : {}) })
     }
   },
   onCodeInput(event) { this.setData({ customCode: event.detail.value }) },
@@ -30,6 +37,7 @@ Page({
     this.confirmReplace(this.data.customCode)
   },
   confirmReplace(inviteCode) {
+    if (this.data.loading || this.data.error || this.data.saving) return
     if (!this.data.configured) {
       this.performSet(inviteCode)
       return

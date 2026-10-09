@@ -1,21 +1,23 @@
 <view class="page profile-page">
   <view class="page-header"><text class="page-header-kicker">FAMILY PROFILE</text><view class="page-header-title">我的</view><view class="page-header-meta">家庭身份与菜单管理</view></view>
   <view wx:if="{{loading}}" class="state-panel card"><view class="state-mark">···</view><view class="state-title">正在确认身份</view></view>
-  <view wx:elif="{{error}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">身份信息没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadProfile">重试</button></view>
+  <view wx:elif="{{error && !profile}}" class="state-panel card"><view class="state-mark">!</view><view class="state-title">身份信息没加载出来</view><view class="state-text">{{error}}</view><button class="secondary-button" bindtap="loadProfile">重试</button></view>
   <block wx:else>
     <view class="identity card">
       <view class="avatar">{{profile.member ? profile.member.nickname[0] : '?'}}</view>
-      <view class="identity-main"><view class="identity-label">家庭成员</view><view class="nickname">{{profile.member ? profile.member.nickname : '尚未加入家庭'}}</view><view class="role"><text class="role-dot"></text>{{profile.member && profile.member.role === 'admin' ? '管理员 · 做饭人' : (profile.authorized ? '家庭成员' : '输入邀请码加入')}}</view></view>
+      <view class="identity-main"><view class="identity-label">家庭成员</view><view class="nickname">{{profile.member ? profile.member.nickname : '尚未加入家庭'}}</view><view class="role"><text class="role-dot"></text>{{profile.authorized ? '家庭用户' : '输入邀请码加入'}}{{profile.member && profile.member.isAdmin ? ' · 管理员' : ''}}</view></view>
     </view>
     <view class="info-card card"><view class="info-top"><view class="info-label">我的 OpenID</view><view class="copy-button" bindtap="copyOpenid" hover-class="button-pressed" role="button">复制</view></view><view class="openid">{{profile.openid}}</view></view>
     <view wx:if="{{!profile.authorized}}" class="notice card"><view class="notice-title">还没有加入家庭</view><view class="muted">回到“菜单”首页，输入家庭管理员发给你的邀请码即可加入。</view></view>
     <view wx:if="{{profile.member && profile.member.role === 'admin'}}" class="admin-section">
-      <view class="section-caption"><text>管理员工具</text><text>2 项</text></view>
+      <view class="section-caption"><text>管理员工具</text><text>3 项</text></view>
       <view class="admin-menu card">
+        <view class="menu-row" bindtap="openFamilyMembers" hover-class="row-pressed" role="button"><view class="row-icon soft">人</view><view class="row-main"><view class="row-title">家庭成员管理</view><view class="row-desc">修改称呼和账号启用状态</view></view><text class="row-arrow">›</text></view>
         <view class="menu-row" bindtap="openAdminDishes" hover-class="row-pressed" role="button"><view class="row-icon">菜</view><view class="row-main"><view class="row-title">菜品管理</view><view class="row-desc">新增、编辑、上架或下架菜品</view></view><text class="row-arrow">›</text></view>
         <view class="menu-row" bindtap="openInviteSettings" hover-class="row-pressed" role="button"><view class="row-icon invite">邀</view><view class="row-main"><view class="row-title">家庭邀请码</view><view class="row-desc">生成或更换家人加入用的邀请码</view></view><text class="row-arrow">›</text></view>
       </view>
     </view>
     <view class="security-note"><text class="security-mark">✓</text><text>身份与管理员权限均由服务器验证</text></view>
   </block>
+  <view wx:if="{{error && profile}}" class="notice card"><view class="muted">{{error}}</view><button class="secondary-button" bindtap="loadProfile">重试更新</button></view>
 </view>
